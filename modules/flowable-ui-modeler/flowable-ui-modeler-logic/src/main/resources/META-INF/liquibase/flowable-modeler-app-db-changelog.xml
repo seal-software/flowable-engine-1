@@ -47,6 +47,9 @@
 			<column name="model_type" type="int">
                 <constraints nullable="true" />
             </column>
+            <column name="tenant_id" type="varchar(255)" defaultValue="">
+            		<constraints nullable="true"/>
+            </column>
 		</createTable>
         
         <createIndex indexName="idx_proc_mod_created"
@@ -97,6 +100,9 @@
             </column>
             <column name="model_type" type="int">
                 <constraints nullable="true" />
+            </column>
+            <column name="tenant_id" type="varchar(255)" defaultValue="">
+            		<constraints nullable="true"/>
             </column>
         </createTable>
         

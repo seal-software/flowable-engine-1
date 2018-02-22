@@ -18,6 +18,7 @@
 		<result property="modelEditorJson" column="model_editor_json" jdbcType="VARCHAR" />
 		<result property="modelType" column="model_type" jdbcType="INTEGER" />
 		<result property="thumbnail" column="thumbnail" jdbcType="${blobType}" />
+		<result property="tenantId" column="tenant_id" jdbcType="VARCHAR"/>
 	</resultMap>
 
     <insert id="insertModel" parameterType="org.flowable.app.domain.editor.Model">
@@ -34,7 +35,8 @@
             version,
             model_editor_json,
             model_type,
-            thumbnail) 
+            thumbnail,
+            tenant_id) 
          values (
             #{id, jdbcType=VARCHAR},
             #{name, jdbcType=VARCHAR},
@@ -48,7 +50,8 @@
             #{version, jdbcType=INTEGER},
             #{modelEditorJson, jdbcType=VARCHAR},
             #{modelType, jdbcType=INTEGER},
-            #{thumbnail, jdbcType=${blobType}}
+            #{thumbnail, jdbcType=${blobType}},
+            #{tenantId, jdbcType=VARCHAR}
           )
     </insert>
     
@@ -72,7 +75,7 @@
     </update>
     
 	<select id="selectModel" parameterType="string" resultMap="modelResultMap">
-		select * from ${prefix}ACT_DE_MODEL where id = #{id, jdbcType=VARCHAR}
+		select * from ${prefix}ACT_DE_MODEL where id = #{id, jdbcType=VARCHAR} and tenant_id = #{tenantId, jdbcType=VARCHAR}
 	</select>
 	
 	<select id="selectModelByParentModelId" parameterType="string" resultMap="modelResultMap">
@@ -82,7 +85,7 @@
 	</select>
 	
 	<select id="selectModelByParameters" parameterType="map" resultMap="modelResultMap">
-		select * from ${prefix}ACT_DE_MODEL
+		select * from ${prefix}ACT_DE_MODEL 
 	   	<where> 
 		   	<if test="modelType != null">
 		       model_type = #{modelType, jdbcType=VARCHAR}
@@ -92,6 +95,9 @@
 	      	</if>
 	      	<if test="key != null">
 	           and model_key = #{key, jdbcType=VARCHAR}
+	      	</if>
+	      	<if test="tenantId != null">
+	      		and tenant_id = #{tenantId, jdbcType=VARCHAR}
 	      	</if>
       	</where>
       	<if test="sort != null">
@@ -112,7 +118,7 @@
 	
 	<select id="countByModelTypeAndCreatedBy" parameterType="map">
 	   select count(m.id) from ${prefix}ACT_DE_MODEL m 
-	   where m.created_by = #{createdBy, jdbcType=VARCHAR} and m.model_type = #{modelType, jdbcType=INTEGER}
+	   where m.created_by = #{createdBy, jdbcType=VARCHAR} and m.model_type = #{modelType, jdbcType=INTEGER} and tenant_id = #{tenantId, jdbcType=VARCHAR}
 	</select>
 
 	<delete id="deleteModel" parameterType="org.flowable.app.domain.editor.Model">

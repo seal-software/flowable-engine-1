@@ -18,6 +18,7 @@ import java.util.Map;
 
 import org.flowable.app.domain.editor.Model;
 import org.flowable.app.repository.UuidIdGenerator;
+import org.flowable.app.security.SecurityUtils;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -52,6 +53,7 @@ public class ModelRepositoryImpl implements ModelRepository {
         params.put("modelType", modelType);
         params.put("filter", filter);
         params.put("sort", sort);
+        params.put("tenantId", SecurityUtils.getCurrentUserObject().getTenantId());
         return findModelsByParameters(params);
     }
 
@@ -82,6 +84,7 @@ public class ModelRepositoryImpl implements ModelRepository {
 
     @Override
     public void save(Model model) {
+    		model.setTenantId(SecurityUtils.getCurrentUserObject().getTenantId());
         if (model.getId() == null) {
             model.setId(idGenerator.generateId());
             sqlSessionTemplate.insert(NAMESPACE + "insertModel", model);
