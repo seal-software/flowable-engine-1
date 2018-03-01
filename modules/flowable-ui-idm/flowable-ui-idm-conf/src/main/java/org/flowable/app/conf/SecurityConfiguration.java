@@ -41,7 +41,6 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
 import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 
@@ -53,7 +52,6 @@ import org.springframework.security.web.header.writers.XXssProtectionHeaderWrite
  */
 @Configuration
 @EnableWebSecurity
-@EnableOAuth2Client
 @EnableGlobalMethodSecurity(prePostEnabled = true, jsr250Enabled = true)
 public class SecurityConfiguration {
 
