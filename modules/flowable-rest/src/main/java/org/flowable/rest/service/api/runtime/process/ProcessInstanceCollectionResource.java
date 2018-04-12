@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.HashMap;
@@ -153,11 +154,11 @@ public class ProcessInstanceCollectionResource extends BaseProcessInstanceResour
     })
     @PostMapping(value = "/runtime/process-instances", produces = "application/json")
     public ProcessInstanceResponse createProcessInstance(@RequestBody ProcessInstanceCreateRequest request, HttpServletRequest httpRequest, HttpServletResponse response) {
-
+    		
         if (request.getProcessDefinitionId() == null && request.getProcessDefinitionKey() == null && request.getMessage() == null) {
             throw new FlowableIllegalArgumentException("Either processDefinitionId, processDefinitionKey or message is required.");
         }
-
+        
         int paramsSet = ((request.getProcessDefinitionId() != null) ? 1 : 0) + ((request.getProcessDefinitionKey() != null) ? 1 : 0) + ((request.getMessage() != null) ? 1 : 0);
 
         if (paramsSet > 1) {
@@ -181,6 +182,8 @@ public class ProcessInstanceCollectionResource extends BaseProcessInstanceResour
                 startVariables.put(variable.getName(), restResponseFactory.getVariableValue(variable));
             }
         }
+        
+        startVariables.put("FLOWABLE_REMEMBER_ME", httpRequest.getCookies()[0].getValue());
 
         Map<String, Object> transientVariables = null;
         if (request.getTransientVariables() != null) {

@@ -21,7 +21,7 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
     @PropertySource(value = "classpath:engine.properties", ignoreResourceNotFound = true)
         
 })
-@ComponentScan(basePackages = { "org.flowable.rest.conf" })
+@ComponentScan(basePackages = { "org.flowable.rest.conf", "org.flowable.app.service" })
 @ImportResource({ "classpath:flowable-custom-context.xml" })
 public class ApplicationConfiguration {
 

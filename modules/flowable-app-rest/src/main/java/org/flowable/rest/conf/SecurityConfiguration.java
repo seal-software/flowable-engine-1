@@ -24,13 +24,17 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
-    
+
     @Autowired
     protected Environment environment;
+
+    @Autowired
+    protected CustomFlowableCookieFilter flowableCookieFilter;
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
@@ -38,7 +42,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         basicAuthenticationProvider.setVerifyRestApiPrivilege(isVerifyRestApiPrivilege());
         return basicAuthenticationProvider;
     }
-    
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         HttpSecurity httpSecurity = http.authenticationProvider(authenticationProvider())
@@ -46,36 +50,39 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .csrf().disable();
-        
+
         // Swagger docs
         if (isSwaggerDocsEnabled()) {
             httpSecurity
-                .authorizeRequests()
-                .antMatchers("/docs/**").permitAll();
-            
+                    .authorizeRequests()
+                    .antMatchers("/docs/**").permitAll();
+
         } else {
             httpSecurity
-                .authorizeRequests()
-                .antMatchers("/docs/**").denyAll();
-            
+                    .authorizeRequests()
+                    .antMatchers("/docs/**").denyAll();
+
         }
 
         // Rest API access
         if (isVerifyRestApiPrivilege()) {
             httpSecurity
-                .authorizeRequests()
-                .anyRequest()
-                .hasAuthority(SecurityConstants.PRIVILEGE_ACCESS_REST_API).and ().httpBasic();
-            
+                    .authorizeRequests()
+                    .anyRequest()
+                    .hasAuthority(SecurityConstants.PRIVILEGE_ACCESS_REST_API)
+                    .and()
+                    .httpBasic()
+                    .and().addFilterAfter(flowableCookieFilter, UsernamePasswordAuthenticationFilter.class);
+
         } else {
             httpSecurity
-            .authorizeRequests()
-            .anyRequest()
-            .authenticated().and().httpBasic();
-            
+                    .authorizeRequests()
+                    .anyRequest()
+                    .authenticated().and().httpBasic();
+
         }
     }
-    
+
     protected boolean isVerifyRestApiPrivilege() {
         String authMode = environment.getProperty("rest.authentication.mode");
         if (StringUtils.isNotEmpty(authMode)) {
@@ -83,9 +90,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         }
         return true; // checking privilege is the default
     }
-    
+
     protected boolean isSwaggerDocsEnabled() {
         return environment.getProperty("rest.docs.swagger.enabled", Boolean.class, true);
     }
-    
+
 }
