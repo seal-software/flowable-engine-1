@@ -23,6 +23,13 @@ import javax.sql.DataSource;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.transaction.TransactionFactory;
+import org.flowable.common.engine.impl.AbstractEngineConfiguration;
+import org.flowable.common.engine.impl.cfg.BeansConfigurationHelper;
+import org.flowable.common.engine.impl.db.DbSqlSessionFactory;
+import org.flowable.common.engine.impl.interceptor.CommandInterceptor;
+import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
+import org.flowable.common.engine.impl.interceptor.SessionFactory;
+import org.flowable.common.engine.impl.runtime.Clock;
 import org.flowable.content.api.ContentEngineConfigurationApi;
 import org.flowable.content.api.ContentManagementService;
 import org.flowable.content.api.ContentService;
@@ -30,7 +37,6 @@ import org.flowable.content.api.ContentStorage;
 import org.flowable.content.engine.impl.ContentEngineImpl;
 import org.flowable.content.engine.impl.ContentManagementServiceImpl;
 import org.flowable.content.engine.impl.ContentServiceImpl;
-import org.flowable.content.engine.impl.ServiceImpl;
 import org.flowable.content.engine.impl.cfg.StandaloneContentEngineConfiguration;
 import org.flowable.content.engine.impl.cfg.StandaloneInMemContentEngineConfiguration;
 import org.flowable.content.engine.impl.db.ContentDbSchemaManager;
@@ -42,13 +48,6 @@ import org.flowable.content.engine.impl.persistence.entity.TableDataManager;
 import org.flowable.content.engine.impl.persistence.entity.TableDataManagerImpl;
 import org.flowable.content.engine.impl.persistence.entity.data.ContentItemDataManager;
 import org.flowable.content.engine.impl.persistence.entity.data.impl.MybatisContentItemDataManager;
-import org.flowable.engine.common.impl.AbstractEngineConfiguration;
-import org.flowable.engine.common.impl.cfg.BeansConfigurationHelper;
-import org.flowable.engine.common.impl.db.DbSqlSessionFactory;
-import org.flowable.engine.common.impl.interceptor.CommandInterceptor;
-import org.flowable.engine.common.impl.interceptor.EngineConfigurationConstants;
-import org.flowable.engine.common.impl.interceptor.SessionFactory;
-import org.flowable.engine.common.impl.runtime.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,12 +153,6 @@ public class ContentEngineConfiguration extends AbstractEngineConfiguration impl
     protected void initServices() {
         initService(contentManagementService);
         initService(contentService);
-    }
-
-    protected void initService(Object service) {
-        if (service instanceof ServiceImpl) {
-            ((ServiceImpl) service).setCommandExecutor(commandExecutor);
-        }
     }
 
     // Data managers

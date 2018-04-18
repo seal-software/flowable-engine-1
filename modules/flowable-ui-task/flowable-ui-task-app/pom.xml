@@ -189,14 +189,6 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-        </dependency>
 
         <!-- COMMON dependencies -->
 		<dependency>
@@ -305,7 +297,6 @@
                 <excludes>
                     <exclude>static/fonts/**</exclude>
                     <exclude>static/libs/ui-grid_3.0.0/**</exclude>
-                    <exclude>application-dev.properties</exclude>
                 </excludes>
             </resource>
             <resource>
