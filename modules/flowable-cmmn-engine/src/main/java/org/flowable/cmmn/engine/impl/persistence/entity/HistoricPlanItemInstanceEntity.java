@@ -22,6 +22,7 @@ import java.util.Date;
  */
 public interface HistoricPlanItemInstanceEntity extends Entity, HistoricPlanItemInstance {
 
+    @Override
     void setId(String id);
 
     void setName(String name);
@@ -42,11 +43,29 @@ public interface HistoricPlanItemInstanceEntity extends Entity, HistoricPlanItem
 
     void setPlanItemDefinitionType(String planItemDefinitionType);
 
-    void setStartTime(Date startTime);
+    void setCreatedTime(Date createdTime);
 
-    void setActivationTime(Date activationTime);
+    void setLastAvailableTime(Date availableTime);
 
-    void setEndTime(Date endTime);
+    void setLastEnabledTime(Date enabledTime);
+
+    void setLastDisabledTime(Date disabledTime);
+
+    void setLastStartedTime(Date startedTime);
+
+    void setLastSuspendedTime(Date suspendedTime);
+
+    void setCompletedTime(Date completedTime);
+
+    void setOccurredTime(Date occurredTime);
+
+    void setTerminatedTime(Date terminatedTime);
+
+    void setExitTime(Date exitTime);
+
+    void setEndedTime(Date endedTime);
+    
+    void setLastUpdatedTime(Date lastUpdatedTime);
 
     void setStartUserId(String startUserId);
 

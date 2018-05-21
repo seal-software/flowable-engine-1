@@ -47,13 +47,13 @@ public abstract class AbstractDeletePlanItemInstanceOperation extends AbstractCh
         
         deleteSentryPartInstances();
         CommandContextUtil.getPlanItemInstanceEntityManager(commandContext).delete(planItemInstanceEntity);
-        CommandContextUtil.getCmmnHistoryManager(commandContext).recordPlanItemIntanceEnded(planItemInstanceEntity);
     }
 
     /**
      * Implementing classes should be aware that unlike extending from AbstractChangePlanItemInstanceStateOperation, this
      * method will be executed just before the deleting the entity
      */
+    @Override
     protected abstract void internalExecute();
 
     protected boolean isRepeatingOnDelete() {

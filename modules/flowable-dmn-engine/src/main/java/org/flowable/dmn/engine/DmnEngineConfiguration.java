@@ -26,6 +26,7 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.transaction.TransactionFactory;
 import org.flowable.common.engine.api.delegate.FlowableFunctionDelegate;
 import org.flowable.common.engine.impl.AbstractEngineConfiguration;
+import org.flowable.common.engine.impl.HasExpressionManagerEngineConfiguration;
 import org.flowable.common.engine.impl.cfg.BeansConfigurationHelper;
 import org.flowable.common.engine.impl.db.DbSqlSessionFactory;
 import org.flowable.common.engine.impl.el.DefaultExpressionManager;
@@ -103,7 +104,8 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-public class DmnEngineConfiguration extends AbstractEngineConfiguration implements DmnEngineConfigurationApi {
+public class DmnEngineConfiguration extends AbstractEngineConfiguration
+        implements DmnEngineConfigurationApi, HasExpressionManagerEngineConfiguration {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(DmnEngineConfiguration.class);
 
@@ -303,6 +305,7 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration implemen
     // data model
     // ///////////////////////////////////////////////////////////////
 
+    @Override
     public void initDbSchemaManager() {
         if (this.dbSchemaManager == null) {
             this.dbSchemaManager = new DmnDbSchemaManager();
@@ -521,14 +524,21 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration implemen
     // rule engine executor
     /////////////////////////////////////////////////////////////
     public void initRuleEngineExecutor() {
-	    	if(ruleEngineExecutor == null) {
-	        ruleEngineExecutor = new RuleEngineExecutorImpl(hitPolicyBehaviors, expressionManager, objectMapper);
-	    	}else if(ruleEngineExecutor instanceof RuleEngineExecutorImpl){
-	    		RuleEngineExecutorImpl ruleEngineExecutorImpl = (RuleEngineExecutorImpl) ruleEngineExecutor;
-	    		ruleEngineExecutorImpl.setExpressionManager(expressionManager);
-	    		ruleEngineExecutorImpl.setHitPolicyBehaviors(hitPolicyBehaviors);
-	    		ruleEngineExecutorImpl.setObjectMapper(objectMapper);
-	    	}
+    	if (ruleEngineExecutor == null) {
+	        ruleEngineExecutor = new RuleEngineExecutorImpl(hitPolicyBehaviors, expressionManager, objectMapper);	        
+    	} else {
+    	    if (ruleEngineExecutor.getExpressionManager() == null) {
+    	        ruleEngineExecutor.setExpressionManager(expressionManager);
+    	    }
+    	    
+    	    if (ruleEngineExecutor.getHitPolicyBehaviors() == null) {
+    	        ruleEngineExecutor.setHitPolicyBehaviors(hitPolicyBehaviors);
+    	    }
+    	    
+    	    if (ruleEngineExecutor.getObjectMapper() == null) {
+    	        ruleEngineExecutor.setObjectMapper(objectMapper);
+    	    }
+    	}
     }
 
 
@@ -692,10 +702,12 @@ public class DmnEngineConfiguration extends AbstractEngineConfiguration implemen
         return this;
     }
 
+    @Override
     public ExpressionManager getExpressionManager() {
         return expressionManager;
     }
 
+    @Override
     public DmnEngineConfiguration setExpressionManager(ExpressionManager expressionManager) {
         this.expressionManager = expressionManager;
         return this;

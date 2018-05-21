@@ -59,6 +59,9 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
+ * This service configuration contains all settings and instances around job execution and management.
+ * Note that a {@link JobServiceConfiguration} is not shared between engines and instantiated for each engine.
+ * 
  * @author Tijs Rademakers
  */
 public class JobServiceConfiguration extends AbstractServiceConfiguration {
@@ -104,25 +107,23 @@ public class JobServiceConfiguration extends AbstractServiceConfiguration {
 
     protected InternalJobManager internalJobManager;
     protected InternalJobCompatibilityManager internalJobCompatibilityManager;
+    protected InternalJobParentStateResolver jobParentStateResolver;
 
     protected AsyncExecutor asyncExecutor;
+    protected int asyncExecutorNumberOfRetries;
+    protected int asyncExecutorResetExpiredJobsMaxTimeout;
     
     protected String jobExecutionScope;
-
     protected Map<String, JobHandler> jobHandlers;
     protected FailedJobCommandFactory failedJobCommandFactory;
     protected List<AsyncRunnableExecutionExceptionHandler> asyncRunnableExecutionExceptionHandlers;
-
-    protected Map<String, HistoryJobHandler> historyJobHandlers;
-
-    protected int asyncExecutorNumberOfRetries;
-    protected int asyncExecutorResetExpiredJobsMaxTimeout;
-
-    protected ObjectMapper objectMapper;
-
     protected List<JobProcessor> jobProcessors;
+    
+    protected AsyncExecutor asyncHistoryExecutor;
+    protected int asyncHistoryExecutorNumberOfRetries;
+    
+    protected Map<String, HistoryJobHandler> historyJobHandlers;
     protected List<HistoryJobProcessor> historyJobProcessors;
-    protected InternalJobParentStateResolver jobParentStateResolver;
 
     // init
     // /////////////////////////////////////////////////////////////////////
@@ -165,7 +166,7 @@ public class JobServiceConfiguration extends AbstractServiceConfiguration {
 
     public void initDataManagers() {
         if (jobDataManager == null) {
-            jobDataManager = new MybatisJobDataManager();
+            jobDataManager = new MybatisJobDataManager(jobExecutionScope);
         }
         if (deadLetterJobDataManager == null) {
             deadLetterJobDataManager = new MybatisDeadLetterJobDataManager();
@@ -177,7 +178,7 @@ public class JobServiceConfiguration extends AbstractServiceConfiguration {
             timerJobDataManager = new MybatisTimerJobDataManager();
         }
         if (historyJobDataManager == null) {
-            historyJobDataManager = new MybatisHistoryJobDataManager();
+            historyJobDataManager = new MybatisHistoryJobDataManager(jobExecutionScope);
         }
         if (jobByteArrayDataManager == null) {
             jobByteArrayDataManager = new MybatisJobByteArrayDataManager();
@@ -398,6 +399,24 @@ public class JobServiceConfiguration extends AbstractServiceConfiguration {
         this.asyncExecutor = asyncExecutor;
         return this;
     }
+    
+    public AsyncExecutor getAsyncHistoryExecutor() {
+        return asyncHistoryExecutor;
+    }
+
+    public JobServiceConfiguration setAsyncHistoryExecutor(AsyncExecutor asyncHistoryExecutor) {
+        this.asyncHistoryExecutor = asyncHistoryExecutor;
+        return this;
+    }
+    
+    public int getAsyncHistoryExecutorNumberOfRetries() {
+        return asyncHistoryExecutorNumberOfRetries;
+    }
+
+    public JobServiceConfiguration setAsyncHistoryExecutorNumberOfRetries(int asyncHistoryExecutorNumberOfRetries) {
+        this.asyncHistoryExecutorNumberOfRetries = asyncHistoryExecutorNumberOfRetries;
+        return this;
+    }
 
     public String getJobExecutionScope() {
         return jobExecutionScope;
@@ -516,4 +535,5 @@ public class JobServiceConfiguration extends AbstractServiceConfiguration {
     public InternalJobParentStateResolver getJobParentStateResolver() {
         return jobParentStateResolver;
     }
+    
 }

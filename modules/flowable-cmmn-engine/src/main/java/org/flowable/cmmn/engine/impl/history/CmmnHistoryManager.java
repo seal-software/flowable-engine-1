@@ -12,8 +12,8 @@
  */
 package org.flowable.cmmn.engine.impl.history;
 
-import org.flowable.cmmn.api.runtime.MilestoneInstance;
 import org.flowable.cmmn.engine.impl.persistence.entity.CaseInstanceEntity;
+import org.flowable.cmmn.engine.impl.persistence.entity.MilestoneInstanceEntity;
 import org.flowable.cmmn.engine.impl.persistence.entity.PlanItemInstanceEntity;
 import org.flowable.identitylink.service.impl.persistence.entity.IdentityLinkEntity;
 import org.flowable.task.service.impl.persistence.entity.TaskEntity;
@@ -26,15 +26,15 @@ public interface CmmnHistoryManager {
 
     void recordCaseInstanceStart(CaseInstanceEntity caseInstanceEntity);
 
-    void recordCaseInstanceEnd(String caseInstanceId, String state);
+    void recordCaseInstanceEnd(CaseInstanceEntity caseInstanceEntity, String state);
 
-    void recordMilestoneReached(MilestoneInstance milestoneInstance);
+    void recordMilestoneReached(MilestoneInstanceEntity milestoneInstanceEntity);
 
-    void recordCaseInstanceDeleted(String caseInstanceId);
+    void recordHistoricCaseInstanceDeleted(String caseInstanceId);
 
     void recordIdentityLinkCreated(IdentityLinkEntity identityLink);
 
-    void recordIdentityLinkDeleted(String identityLinkId);
+    void recordIdentityLinkDeleted(IdentityLinkEntity identityLink);
 
     void recordVariableCreate(VariableInstanceEntity variable);
 
@@ -50,7 +50,22 @@ public interface CmmnHistoryManager {
 
     void recordPlanItemInstanceCreated(PlanItemInstanceEntity planItemInstanceEntity);
 
-    void recordPlanItemInstanceActivated(PlanItemInstanceEntity planItemInstanceEntity);
+    void recordPlanItemInstanceAvailable(PlanItemInstanceEntity planItemInstanceEntity);
 
-    void recordPlanItemIntanceEnded(PlanItemInstanceEntity planItemInstanceEntity);
+    void recordPlanItemInstanceEnabled(PlanItemInstanceEntity planItemInstanceEntity);
+
+    void recordPlanItemInstanceDisabled(PlanItemInstanceEntity planItemInstanceEntity);
+
+    void recordPlanItemInstanceStarted(PlanItemInstanceEntity planItemInstanceEntity);
+
+    void recordPlanItemInstanceSuspended(PlanItemInstanceEntity planItemInstanceEntity);
+
+    void recordPlanItemInstanceCompleted(PlanItemInstanceEntity planItemInstanceEntity);
+
+    void recordPlanItemInstanceOccurred(PlanItemInstanceEntity planItemInstanceEntity);
+
+    void recordPlanItemInstanceTerminated(PlanItemInstanceEntity planItemInstanceEntity);
+
+    void recordPlanItemInstanceExit(PlanItemInstanceEntity planItemInstanceEntity);
+
 }

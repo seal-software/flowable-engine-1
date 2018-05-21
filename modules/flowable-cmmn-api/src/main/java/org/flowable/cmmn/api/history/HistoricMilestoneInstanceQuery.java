@@ -20,12 +20,16 @@ import org.flowable.common.engine.api.query.Query;
  * @author Joram Barrez
  */
 public interface HistoricMilestoneInstanceQuery extends Query<HistoricMilestoneInstanceQuery, HistoricMilestoneInstance> {
-    
+
+    HistoricMilestoneInstanceQuery milestoneInstanceId(String Id);
     HistoricMilestoneInstanceQuery milestoneInstanceName(String name);
     HistoricMilestoneInstanceQuery milestoneInstanceCaseInstanceId(String caseInstanceId);
     HistoricMilestoneInstanceQuery milestoneInstanceCaseDefinitionId(String caseDefinitionId);
     HistoricMilestoneInstanceQuery milestoneInstanceReachedBefore(Date reachedBefore);
     HistoricMilestoneInstanceQuery milestoneInstanceReachedAfter(Date reachedAfter);
+    HistoricMilestoneInstanceQuery milestoneInstanceTenantId(String tenantId);
+    HistoricMilestoneInstanceQuery milestoneInstanceTenantIdLike(String tenantIdLike);
+    HistoricMilestoneInstanceQuery milestoneInstanceWithoutTenantId();
     
     HistoricMilestoneInstanceQuery orderByMilestoneName();
     HistoricMilestoneInstanceQuery orderByTimeStamp();
