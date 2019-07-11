@@ -28,7 +28,6 @@ import org.flowable.spring.boot.BaseEngineConfigurationWithConfigurers;
 import org.flowable.spring.boot.EngineConfigurationConfigurer;
 import org.flowable.spring.boot.FlowableJobConfiguration;
 import org.flowable.spring.boot.FlowableProperties;
-import org.flowable.spring.boot.FlowableTransactionAutoConfiguration;
 import org.flowable.spring.boot.ProcessEngineAutoConfiguration;
 import org.flowable.spring.boot.ProcessEngineServicesAutoConfiguration;
 import org.flowable.spring.boot.app.AppEngineAutoConfiguration;
@@ -66,7 +65,6 @@ import org.springframework.transaction.PlatformTransactionManager;
     FlowableAppProperties.class
 })
 @AutoConfigureAfter({
-    FlowableTransactionAutoConfiguration.class,
     AppEngineAutoConfiguration.class,
     ProcessEngineAutoConfiguration.class,
 })
@@ -145,6 +143,8 @@ public class CmmnEngineAutoConfiguration extends AbstractSpringEngineAutoConfigu
         configuration.setHistoryLevel(flowableProperties.getHistoryLevel());
 
         configuration.setEnableSafeCmmnXml(cmmnProperties.isEnableSafeXml());
+
+        configuration.setFormFieldValidationEnabled(flowableProperties.isFormFieldValidationEnabled());
 
         return configuration;
     }

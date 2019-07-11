@@ -13,17 +13,20 @@
 
 package org.flowable.cmmn.rest.service.api.history.milestone;
 
-import org.flowable.cmmn.api.CmmnHistoryService;
-import org.flowable.cmmn.api.history.HistoricMilestoneInstanceQuery;
-import org.flowable.cmmn.engine.impl.runtime.MilestoneInstanceQueryProperty;
-import org.flowable.cmmn.rest.service.api.CmmnRestResponseFactory;
-import org.flowable.common.engine.api.query.QueryProperty;
-import org.flowable.common.rest.api.DataResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import static org.flowable.common.rest.api.PaginateListUtil.paginateList;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import org.flowable.cmmn.api.CmmnHistoryService;
+import org.flowable.cmmn.api.history.HistoricMilestoneInstanceQuery;
+import org.flowable.cmmn.engine.impl.runtime.MilestoneInstanceQueryProperty;
+import org.flowable.cmmn.rest.service.api.CmmnRestApiInterceptor;
+import org.flowable.cmmn.rest.service.api.CmmnRestResponseFactory;
+import org.flowable.common.engine.api.query.QueryProperty;
+import org.flowable.common.rest.api.DataResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Tijs Rademakers
@@ -43,6 +46,9 @@ public abstract class HistoricMilestoneInstanceBaseResource {
 
     @Autowired
     protected CmmnHistoryService historyService;
+    
+    @Autowired(required=false)
+    protected CmmnRestApiInterceptor restApiInterceptor;
 
     protected DataResponse<HistoricMilestoneInstanceResponse> getQueryResponse(HistoricMilestoneInstanceQueryRequest queryRequest, Map<String, String> allRequestParams) {
         HistoricMilestoneInstanceQuery query = historyService.createHistoricMilestoneInstanceQuery();
@@ -53,8 +59,13 @@ public abstract class HistoricMilestoneInstanceBaseResource {
         Optional.ofNullable(queryRequest.getCaseDefinitionId()).ifPresent(query::milestoneInstanceCaseInstanceId);
         Optional.ofNullable(queryRequest.getReachedBefore()).ifPresent(query::milestoneInstanceReachedBefore);
         Optional.ofNullable(queryRequest.getReachedAfter()).ifPresent(query::milestoneInstanceReachedAfter);
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.accessHistoryMilestoneInfoWithQuery(query, queryRequest);
+        }
 
-        return new HistoricMilestoneInstancePaginateList(restResponseFactory).paginateList(allRequestParams, queryRequest, query, "timestamp", allowedSortProperties);
+        return paginateList(allRequestParams, queryRequest, query, "timestamp", allowedSortProperties,
+            restResponseFactory::createHistoricMilestoneInstanceResponseList);
     }
 
 }

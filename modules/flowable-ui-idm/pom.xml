@@ -10,16 +10,12 @@
         <groupId>org.flowable</groupId>
         <artifactId>flowable-spring-boot</artifactId>
         <relativePath>../flowable-spring-boot/pom.xml</relativePath>
-        <version>6.3.1-SNAPSHOT</version>
+        <version>6.4.1-19</version>
     </parent>
 
     <properties>
         <tomcat.version>7.0.53</tomcat.version>
     </properties>
-
-    <prerequisites>
-        <maven>3.0.0</maven>
-    </prerequisites>
 
     <modules>
         <module>flowable-ui-idm-logic</module>

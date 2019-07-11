@@ -13,6 +13,8 @@
 
 package org.flowable.cmmn.rest.service.api.runtime.planitem;
 
+import static org.flowable.common.rest.api.PaginateListUtil.paginateList;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,7 @@ import org.flowable.cmmn.api.CmmnRuntimeService;
 import org.flowable.cmmn.api.runtime.PlanItemInstance;
 import org.flowable.cmmn.api.runtime.PlanItemInstanceQuery;
 import org.flowable.cmmn.engine.impl.runtime.PlanItemInstanceQueryProperty;
+import org.flowable.cmmn.rest.service.api.CmmnRestApiInterceptor;
 import org.flowable.cmmn.rest.service.api.CmmnRestResponseFactory;
 import org.flowable.cmmn.rest.service.api.engine.variable.QueryVariable;
 import org.flowable.cmmn.rest.service.api.engine.variable.QueryVariable.QueryVariableOperation;
@@ -40,7 +43,8 @@ public class PlanItemInstanceBaseResource {
 
     static {
         allowedSortProperties.put("name", PlanItemInstanceQueryProperty.NAME);
-        allowedSortProperties.put("startTime", PlanItemInstanceQueryProperty.START_TIME);
+        allowedSortProperties.put("createTime", PlanItemInstanceQueryProperty.CREATE_TIME);
+        allowedSortProperties.put("startTime", PlanItemInstanceQueryProperty.CREATE_TIME); // backwards compatibility
     }
 
     @Autowired
@@ -48,6 +52,9 @@ public class PlanItemInstanceBaseResource {
 
     @Autowired
     protected CmmnRuntimeService runtimeService;
+    
+    @Autowired(required=false)
+    protected CmmnRestApiInterceptor restApiInterceptor;
 
     protected DataResponse<PlanItemInstanceResponse> getQueryResponse(PlanItemInstanceQueryRequest queryRequest, Map<String, String> requestParams, String serverRootUrl) {
 
@@ -72,6 +79,9 @@ public class PlanItemInstanceBaseResource {
         if (queryRequest.getPlanItemDefinitionType() != null) {
             query.planItemDefinitionType(queryRequest.getPlanItemDefinitionType());
         }
+        if (queryRequest.getPlanItemDefinitionTypes() != null) {
+            query.planItemDefinitionTypes(queryRequest.getPlanItemDefinitionTypes());
+        }
         if (queryRequest.getName() != null) {
             query.planItemInstanceName(queryRequest.getName());
         }
@@ -87,11 +97,11 @@ public class PlanItemInstanceBaseResource {
         if (queryRequest.getReferenceType() != null) {
             query.planItemInstanceReferenceType(queryRequest.getReferenceType());
         }
-        if (queryRequest.getStartedBefore() != null) {
-            query.planItemInstanceStartedBefore(queryRequest.getStartedBefore());
+        if (queryRequest.getCreatedBefore() != null) {
+            query.planItemInstanceCreatedBefore(queryRequest.getCreatedBefore());
         }
-        if (queryRequest.getStartedAfter() != null) {
-            query.planItemInstanceStartedAfter(queryRequest.getStartedAfter());
+        if (queryRequest.getCreatedAfter() != null) {
+            query.planItemInstanceCreatedAfter(queryRequest.getCreatedAfter());
         }
         if (queryRequest.getStartUserId() != null) {
             query.planItemInstanceStartUserId(queryRequest.getStartUserId());
@@ -112,8 +122,12 @@ public class PlanItemInstanceBaseResource {
         if (Boolean.TRUE.equals(queryRequest.getWithoutTenantId())) {
             query.planItemInstanceWithoutTenantId();
         }
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.accessPlanItemInstanceInfoWithQuery(query, queryRequest);
+        }
 
-        return new PlanItemInstancePaginateList(restResponseFactory).paginateList(requestParams, queryRequest, query, "startTime", allowedSortProperties);
+        return paginateList(requestParams, queryRequest, query, "createTime", allowedSortProperties, restResponseFactory::createPlanItemInstanceResponseList);
     }
 
     protected void addVariables(PlanItemInstanceQuery planItemInstanceQuery, List<QueryVariable> variables, boolean isCase) {
@@ -194,6 +208,11 @@ public class PlanItemInstanceBaseResource {
         if (planItemInstance == null) {
             throw new FlowableObjectNotFoundException("Could not find an plan item instance with id '" + planItemInstance + "'.", PlanItemInstance.class);
         }
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.accessPlanItemInstanceInfoById(planItemInstance);
+        }
+        
         return planItemInstance;
     }
 

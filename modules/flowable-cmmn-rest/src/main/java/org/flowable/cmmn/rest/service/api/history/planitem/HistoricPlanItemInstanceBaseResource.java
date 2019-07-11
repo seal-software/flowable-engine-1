@@ -13,17 +13,20 @@
 
 package org.flowable.cmmn.rest.service.api.history.planitem;
 
-import org.flowable.cmmn.api.CmmnHistoryService;
-import org.flowable.cmmn.api.history.HistoricPlanItemInstanceQuery;
-import org.flowable.cmmn.engine.impl.history.HistoricPlanItemInstanceQueryProperty;
-import org.flowable.cmmn.rest.service.api.CmmnRestResponseFactory;
-import org.flowable.common.engine.api.query.QueryProperty;
-import org.flowable.common.rest.api.DataResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import static org.flowable.common.rest.api.PaginateListUtil.paginateList;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import org.flowable.cmmn.api.CmmnHistoryService;
+import org.flowable.cmmn.api.history.HistoricPlanItemInstanceQuery;
+import org.flowable.cmmn.engine.impl.history.HistoricPlanItemInstanceQueryProperty;
+import org.flowable.cmmn.rest.service.api.CmmnRestApiInterceptor;
+import org.flowable.cmmn.rest.service.api.CmmnRestResponseFactory;
+import org.flowable.common.engine.api.query.QueryProperty;
+import org.flowable.common.rest.api.DataResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Tijs Rademakers
@@ -34,7 +37,8 @@ public abstract class HistoricPlanItemInstanceBaseResource {
     private static Map<String, QueryProperty> allowedSortProperties = new HashMap<>();
 
     static {
-        allowedSortProperties.put("createdTime", HistoricPlanItemInstanceQueryProperty.CREATED_TIME);
+        allowedSortProperties.put("createTime", HistoricPlanItemInstanceQueryProperty.CREATE_TIME);
+        allowedSortProperties.put("createdTime", HistoricPlanItemInstanceQueryProperty.CREATE_TIME); // backwards compatibility
         allowedSortProperties.put("endedTime", HistoricPlanItemInstanceQueryProperty.ENDED_TIME);
         allowedSortProperties.put("name", HistoricPlanItemInstanceQueryProperty.NAME);
     }
@@ -44,6 +48,9 @@ public abstract class HistoricPlanItemInstanceBaseResource {
 
     @Autowired
     protected CmmnHistoryService historyService;
+    
+    @Autowired(required=false)
+    protected CmmnRestApiInterceptor restApiInterceptor;
 
     protected DataResponse<HistoricPlanItemInstanceResponse> getQueryResponse(HistoricPlanItemInstanceQueryRequest queryRequest, Map<String, String> allRequestParams) {
         HistoricPlanItemInstanceQuery query = historyService.createHistoricPlanItemInstanceQuery();
@@ -89,8 +96,13 @@ public abstract class HistoricPlanItemInstanceBaseResource {
         Optional.ofNullable(queryRequest.getExitAfter()).ifPresent(query::exitAfter);
         Optional.ofNullable(queryRequest.getEndedBefore()).ifPresent(query::endedBefore);
         Optional.ofNullable(queryRequest.getEndedAfter()).ifPresent(query::endedAfter);
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.accessHistoryPlanItemInfoWithQuery(query, queryRequest);
+        }
 
-        return new HistoricPlanItemInstancePaginateList(restResponseFactory).paginateList(allRequestParams, queryRequest, query, "createdTime", allowedSortProperties);
+        return paginateList(allRequestParams, queryRequest, query, "createTime", allowedSortProperties,
+            restResponseFactory::createHistoricPlanItemInstanceResponseList);
     }
 
 }

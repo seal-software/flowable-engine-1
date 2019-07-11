@@ -1,3 +1,4 @@
+drop table if exists ACT_RU_ACTINST cascade constraints;
 drop table if exists ACT_RE_DEPLOYMENT cascade constraints;
 drop table if exists ACT_RE_MODEL cascade constraints;
 drop table if exists ACT_RU_EXECUTION cascade constraints;
@@ -11,3 +12,10 @@ drop index if exists ACT_IDX_VARIABLE_TASK_ID;
 drop index if exists ACT_IDX_EVENT_SUBSCR_CONFIG_;
 drop index if exists ACT_IDX_ATHRZ_PROCEDEF;
 drop index if exists ACT_IDX_INFO_PROCDEF;
+
+drop index if exists ACT_IDX_RU_ACTI_START;
+drop index if exists ACT_IDX_RU_ACTI_END;
+drop index if exists ACT_IDX_RU_ACTI_PROC;
+drop index if exists ACT_IDX_RU_ACTI_PROC_ACT;
+drop index if exists ACT_IDX_RU_ACTI_EXEC;
+drop index if exists ACT_IDX_RU_ACTI_EXEC_ACT;

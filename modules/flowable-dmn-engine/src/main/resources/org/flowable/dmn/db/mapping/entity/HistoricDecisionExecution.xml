@@ -48,7 +48,6 @@
     <foreach collection="list" item="historicDecisionExecution" index="index">
      INTO ${prefix}ACT_DMN_HI_DECISION_EXECUTION(ID_, DECISION_DEFINITION_ID_, DEPLOYMENT_ID_, START_TIME_, END_TIME_, INSTANCE_ID_, EXECUTION_ID_, 
         ACTIVITY_ID_, FAILED_, TENANT_ID_, EXECUTION_JSON_, SCOPE_TYPE_) VALUES
-        values
             (#{historicDecisionExecution.id, jdbcType=VARCHAR},
              #{historicDecisionExecution.decisionDefinitionId, jdbcType=VARCHAR},
              #{historicDecisionExecution.deploymentId, jdbcType=VARCHAR},
@@ -150,6 +149,16 @@
       </if>
       <if test="scopeType != null">
         and RES.SCOPE_TYPE_ = #{scopeType}
+      </if>
+      <if test="processInstanceIdWithChildren != null">
+        and (RES.INSTANCE_ID_ = #{processInstanceIdWithChildren} or exists(select ELINK.ID_ from ${prefix}ACT_HI_ENTITYLINK ELINK where ELINK.LINK_TYPE_ = 'child' and 
+            ELINK.SCOPE_ID_ = #{processInstanceIdWithChildren} AND ELINK.SCOPE_TYPE_ = 'bpmn' and 
+            ELINK.REF_SCOPE_ID_ = RES.INSTANCE_ID_))
+      </if>
+      <if test="caseInstanceIdWithChildren != null">
+        and (RES.INSTANCE_ID_ = #{caseInstanceIdWithChildren} or exists(select ELINK.ID_ from ${prefix}ACT_HI_ENTITYLINK ELINK where ELINK.LINK_TYPE_ = 'child' and 
+            ELINK.SCOPE_ID_ = #{caseInstanceIdWithChildren} AND ELINK.SCOPE_TYPE_ = 'cmmn' and 
+            ELINK.REF_SCOPE_ID_ = RES.INSTANCE_ID_))
       </if>
       <if test="failed != null">
         and RES.FAILED_ = #{failed}

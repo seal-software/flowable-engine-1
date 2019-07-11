@@ -149,7 +149,27 @@ public interface HistoricCaseInstanceQuery extends Query<HistoricCaseInstanceQue
      * Only select historic case instances that have no tenant identifier.
      */
     HistoricCaseInstanceQuery caseInstanceWithoutTenantId();
-    
+
+    /**
+     * Begin an OR statement. Make sure you invoke the endOr method at the end of your OR statement. Only one OR statement is allowed, for the second call to this method an exception will be thrown.
+     */
+    HistoricCaseInstanceQuery or();
+
+    /**
+     * End an OR statement. Only one OR statement is allowed, for the second call to this method an exception will be thrown.
+     */
+    HistoricCaseInstanceQuery endOr();
+
+    /**
+     * Select the historic case instances with which the user with the given id is involved.
+     */
+    HistoricCaseInstanceQuery involvedUser(String userId);
+
+    /**
+     * Select the historic case instances with which the groups with the given ids are involved.
+     */
+    HistoricCaseInstanceQuery involvedGroups(Set<String> groupIds);
+
     /**
      * Only select case instances which had a global variable with the given value when they ended. 
      * Byte-arrays and {@link Serializable} objects (which are not primitive type wrappers) are not supported.
@@ -247,6 +267,14 @@ public interface HistoricCaseInstanceQuery extends Query<HistoricCaseInstanceQue
      *            cannot be null. The string can include the wildcard character '%' to express like-strategy: starts with (string%), ends with (%string) or contains (%string%).
      */
     HistoricCaseInstanceQuery variableValueLikeIgnoreCase(String name, String value);
+
+    /**
+     * Only select case instances that have a name like (case insensitive) the given name.
+     *
+     * @param nameLikeIgnoreCase
+     *          cannot be null. The string can include the wildcard character '%' to express like-strategy: starts with (string%), ends with (%string) or contains (%string%).
+     */
+    HistoricCaseInstanceQuery caseInstanceNameLikeIgnoreCase(String nameLikeIgnoreCase);
     
     /**
      * Only select case instances which have a variable with the given name.
@@ -265,6 +293,7 @@ public interface HistoricCaseInstanceQuery extends Query<HistoricCaseInstanceQue
     HistoricCaseInstanceQuery variableNotExists(String name);
     
     HistoricCaseInstanceQuery orderByCaseInstanceId();
+    HistoricCaseInstanceQuery orderByCaseInstanceName();
     HistoricCaseInstanceQuery orderByCaseDefinitionKey();
     HistoricCaseInstanceQuery orderByCaseDefinitionId();
     HistoricCaseInstanceQuery orderByStartTime();

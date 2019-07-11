@@ -70,7 +70,7 @@ public class GroupResource extends BaseGroupResource {
             }
             identityService.saveGroup(group);
         } else {
-            throw new FlowableIllegalArgumentException("Key provided in request body doesn't match the key in the resource URL.");
+            throw new FlowableIllegalArgumentException("Key provided in request body does not match the key in the resource URL.");
         }
 
         return restResponseFactory.createGroupResponse(group);
@@ -84,6 +84,11 @@ public class GroupResource extends BaseGroupResource {
     @DeleteMapping("/identity/groups/{groupId}")
     public void deleteGroup(@ApiParam(name = "groupId") @PathVariable String groupId, HttpServletResponse response) {
         Group group = getGroupFromRequest(groupId);
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.deleteGroup(group);
+        }
+        
         identityService.deleteGroup(group.getId());
         response.setStatus(HttpStatus.NO_CONTENT.value());
     }

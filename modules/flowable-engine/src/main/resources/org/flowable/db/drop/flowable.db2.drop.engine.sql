@@ -97,6 +97,14 @@ alter table ACT_PROCDEF_INFO
 drop index ACT_IDX_EVENT_SUBSCR_CONFIG_;
 drop index ACT_IDX_ATHRZ_PROCEDEF;
 
+drop index ACT_IDX_RU_ACTI_START;
+drop index ACT_IDX_RU_ACTI_END;
+drop index ACT_IDX_RU_ACTI_PROC;
+drop index ACT_IDX_RU_ACTI_PROC_ACT;
+drop index ACT_IDX_RU_ACTI_EXEC;
+drop index ACT_IDX_RU_ACTI_EXEC_ACT;
+
+drop table ACT_RU_ACTINST;
 drop table ACT_RE_DEPLOYMENT;
 drop table ACT_RE_MODEL;
 drop table ACT_RE_PROCDEF;

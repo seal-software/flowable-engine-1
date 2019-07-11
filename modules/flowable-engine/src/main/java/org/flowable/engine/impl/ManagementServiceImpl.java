@@ -51,6 +51,7 @@ import org.flowable.job.service.impl.cmd.DeleteHistoryJobCmd;
 import org.flowable.job.service.impl.cmd.DeleteJobCmd;
 import org.flowable.job.service.impl.cmd.DeleteSuspendedJobCmd;
 import org.flowable.job.service.impl.cmd.DeleteTimerJobCmd;
+import org.flowable.job.service.impl.cmd.ExecuteHistoryJobCmd;
 import org.flowable.job.service.impl.cmd.ExecuteJobCmd;
 import org.flowable.job.service.impl.cmd.GetJobExceptionStacktraceCmd;
 import org.flowable.job.service.impl.cmd.JobType;
@@ -90,10 +91,6 @@ public class ManagementServiceImpl extends CommonEngineServiceImpl<ProcessEngine
 
     @Override
     public void executeJob(String jobId) {
-        if (jobId == null) {
-            throw new FlowableIllegalArgumentException("JobId is null");
-        }
-
         try {
             commandExecutor.execute(new ExecuteJobCmd(jobId));
 
@@ -104,6 +101,11 @@ public class ManagementServiceImpl extends CommonEngineServiceImpl<ProcessEngine
                 throw new FlowableException("Job " + jobId + " failed", e);
             }
         }
+    }
+    
+    @Override
+    public void executeHistoryJob(String historyJobId) {
+        commandExecutor.execute(new ExecuteHistoryJobCmd(historyJobId));
     }
 
     @Override
@@ -245,7 +247,7 @@ public class ManagementServiceImpl extends CommonEngineServiceImpl<ProcessEngine
                 DbSqlSessionFactory dbSqlSessionFactory = (DbSqlSessionFactory) commandContext.getSessionFactories().get(DbSqlSession.class);
                 DbSqlSession dbSqlSession = new DbSqlSession(dbSqlSessionFactory, CommandContextUtil.getEntityCache(commandContext), connection, catalog, schema);
                 commandContext.getSessions().put(DbSqlSession.class, dbSqlSession);
-                return CommandContextUtil.getProcessEngineConfiguration(commandContext).getDbSchemaManager().dbSchemaUpdate();
+                return CommandContextUtil.getProcessEngineConfiguration(commandContext).getSchemaManager().schemaUpdate();
             }
         });
     }

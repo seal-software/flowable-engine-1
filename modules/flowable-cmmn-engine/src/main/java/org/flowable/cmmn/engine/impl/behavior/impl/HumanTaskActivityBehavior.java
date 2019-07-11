@@ -24,6 +24,7 @@ import org.flowable.cmmn.engine.impl.behavior.PlanItemActivityBehavior;
 import org.flowable.cmmn.engine.impl.persistence.entity.PlanItemInstanceEntity;
 import org.flowable.cmmn.engine.impl.task.TaskHelper;
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
+import org.flowable.cmmn.engine.impl.util.EntityLinkUtil;
 import org.flowable.cmmn.model.HumanTask;
 import org.flowable.cmmn.model.PlanItemTransition;
 import org.flowable.common.engine.api.FlowableException;
@@ -32,9 +33,8 @@ import org.flowable.common.engine.api.delegate.Expression;
 import org.flowable.common.engine.api.scope.ScopeTypes;
 import org.flowable.common.engine.impl.el.ExpressionManager;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
-import org.flowable.identitylink.service.impl.persistence.entity.IdentityLinkEntity;
 import org.flowable.task.service.TaskService;
-import org.flowable.task.service.impl.persistence.CountingTaskEntity;
+import org.flowable.task.service.delegate.TaskListener;
 import org.flowable.task.service.impl.persistence.entity.TaskEntity;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
@@ -83,6 +83,14 @@ public class HumanTaskActivityBehavior extends TaskActivityBehavior implements P
             handleCandidateGroups(commandContext, planItemInstanceEntity, expressionManager, taskEntity);
 
             CommandContextUtil.getCmmnHistoryManager(commandContext).recordTaskCreated(taskEntity);
+            
+            if (CommandContextUtil.getCmmnEngineConfiguration(commandContext).isEnableEntityLinks()) {
+                EntityLinkUtil.copyExistingEntityLinks(planItemInstanceEntity.getCaseInstanceId(), taskEntity.getId(), ScopeTypes.TASK);
+                EntityLinkUtil.createNewEntityLink(planItemInstanceEntity.getCaseInstanceId(), taskEntity.getId(), ScopeTypes.TASK);
+            }
+
+            CommandContextUtil.getCmmnEngineConfiguration(commandContext).getListenerNotificationHelper()
+                .executeTaskListeners(humanTask, taskEntity, TaskListener.EVENTNAME_CREATE);
 
         } else {
             // if not blocking, treat as a manual task. No need to create a task entry.
@@ -223,10 +231,10 @@ public class HumanTaskActivityBehavior extends TaskActivityBehavior implements P
                 Object value = userIdExpr.getValue(planItemInstanceEntity);
                 if (value instanceof String) {
                     List<String> candidates = extractCandidates((String) value);
-                    handleIdentityLinks(commandContext, taskEntity, CommandContextUtil.getIdentityLinkService().addCandidateUsers(taskEntity.getId(), candidates));
+                    taskEntity.addCandidateUsers(candidates);
 
                 } else if (value instanceof Collection) {
-                    handleIdentityLinks(commandContext, taskEntity, CommandContextUtil.getIdentityLinkService().addCandidateUsers(taskEntity.getId(), (Collection) value));
+                    taskEntity.addCandidateUsers((Collection<String>) value);
 
                 } else {
                     throw new FlowableException("Expression did not resolve to a string or collection of strings");
@@ -244,27 +252,15 @@ public class HumanTaskActivityBehavior extends TaskActivityBehavior implements P
                 Object value = groupIdExpr.getValue(planItemInstanceEntity);
                 if (value instanceof String) {
                     List<String> candidates = extractCandidates((String) value);
-                    handleIdentityLinks(commandContext, taskEntity, CommandContextUtil.getIdentityLinkService().addCandidateGroups(taskEntity.getId(), candidates));
+                    taskEntity.addCandidateGroups(candidates);
 
                 } else if (value instanceof Collection) {
-                    handleIdentityLinks(commandContext, taskEntity, CommandContextUtil.getIdentityLinkService().addCandidateGroups(taskEntity.getId(), (Collection) value));
+                    taskEntity.addCandidateGroups((Collection<String>) value);
 
                 } else {
                     throw new FlowableIllegalArgumentException("Expression did not resolve to a string or collection of strings");
                 }
             }
-        }
-    }
-
-    protected void handleIdentityLinks(CommandContext commandContext, TaskEntity taskEntity, List<IdentityLinkEntity> identityLinkEntities) {
-        for (IdentityLinkEntity identityLinkEntity : identityLinkEntities) {
-            if (CommandContextUtil.getCmmnEngineConfiguration().isEnableTaskRelationshipCounts()) {
-                CountingTaskEntity countingTaskEntity = (CountingTaskEntity) taskEntity;
-                if (countingTaskEntity.isCountEnabled()) {
-                    countingTaskEntity.setIdentityLinkCount(countingTaskEntity.getIdentityLinkCount() + 1);
-                }
-            }
-            taskEntity.getIdentityLinks().add(identityLinkEntity);
         }
     }
 

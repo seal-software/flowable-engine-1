@@ -10,7 +10,7 @@
         <groupId>org.flowable</groupId>
         <artifactId>flowable-root</artifactId>
         <relativePath>../..</relativePath>
-        <version>6.3.1-SNAPSHOT</version>
+        <version>6.4.1-19</version>
     </parent>
 
     <dependencies>
@@ -41,6 +41,10 @@
         <dependency>
             <groupId>org.flowable</groupId>
             <artifactId>flowable-identitylink-service</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flowable</groupId>
+            <artifactId>flowable-entitylink-service</artifactId>
         </dependency>
         <dependency>
             <groupId>org.flowable</groupId>
@@ -104,8 +108,23 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-all</artifactId>
+            <artifactId>groovy-jsr223</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -119,8 +138,9 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
+            <!-- no official JPA 2.1 Jar was ever published, so we have to use a vendor implementation :( -->
+            <groupId>org.hibernate.javax.persistence</groupId>
+            <artifactId>hibernate-jpa-2.1-api</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -144,8 +164,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.openjpa</groupId>
-            <artifactId>openjpa</artifactId>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -173,6 +198,7 @@
             <artifactId>java-uuid-generator</artifactId>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <!-- required for DiagramQueryTest -->
             <groupId>commons-io</groupId>
@@ -217,7 +243,10 @@
             org.flowable.engine
         </flowable.artifact>
         <flowable.osgi.export.additional>
-            org.flowable.db.mapping.entity
+            org.flowable.db.create,
+            org.flowable.db.update,
+            org.flowable.db.mapping,
+            org.flowable.db.mapping.entity,
         </flowable.osgi.export.additional>
         <flowable.osgi.import.additional>
             junit*;resolution:=optional,
@@ -236,6 +265,8 @@
             javax.transaction;resolution:=optional,
             javax.enterprise.concurrent;resolution:=optional,
         </flowable.osgi.import.additional>
+        <exclude.tests>nothing-to-exclude</exclude.tests>
+        <exclude.tests2>nothing-to-exclude</exclude.tests2>
     </properties>
 
     <build>
@@ -246,6 +277,8 @@
                     <excludes>
                         <exclude>**/*TestCase.java</exclude>
                         <exclude>**/RepeatingServiceTaskTest.java</exclude>
+                        <exclude>${exclude.tests}</exclude>
+                        <exclude>${exclude.tests2}</exclude>
                     </excludes>
                     <runOrder>alphabetical</runOrder>
                 </configuration>
@@ -539,12 +572,15 @@
                     <name>databaseasynchistory</name>
                 </property>
             </activation>
+            <properties>
+                <exclude.tests>**/ProcessInstanceMigration*Test.java</exclude.tests>
+                <exclude.tests2>**/ChangeState*Test.java</exclude.tests2>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
                         <artifactId>maven-antrun-plugin</artifactId>
-                        <!-- only worked with this version, there might be 
-                            a bug with antrun see http://jira.codehaus.org/browse/MANTRUN-109 -->
+                        
                         <version>1.4</version>
                         <executions>
                             <execution>
@@ -596,6 +632,10 @@
                     <name>databasewithschemaasynchistory</name>
                 </property>
             </activation>
+            <properties>
+                <exclude.tests>**/ProcessInstanceMigration*Test.java</exclude.tests>
+                <exclude.tests2>**/ChangeState*Test.java</exclude.tests2>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -653,6 +693,10 @@
                     <name>databasemssqlasynchistory</name>
                 </property>
             </activation>
+            <properties>
+                <exclude.tests>**/ProcessInstanceMigration*Test.java</exclude.tests>
+                <exclude.tests2>**/ChangeState*Test.java</exclude.tests2>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -876,6 +920,7 @@
                                 <exclude>**/HistoricTaskInstanceUpdateTest.java</exclude> <!-- http://jira.codehaus.org/browse/ACT-485 -->
                                 <exclude>**/RepeatingServiceTaskTest.java</exclude>
                                 <exclude>org/flowable/standalone/**</exclude>
+                                <exclude>**/FlowableJupiterSubclassTest.java</exclude>
                             </excludes>
                             <runOrder>alphabetical</runOrder>
                         </configuration>
@@ -1066,6 +1111,7 @@
                                 <exclude>**/HistoricTaskInstanceUpdateTest.java</exclude> <!-- http://jira.codehaus.org/browse/ACT-485 -->
                                 <exclude>**/RepeatingServiceTaskTest.java</exclude>
                                 <exclude>org/flowable/standalone/**</exclude>
+                                <exclude>**/FlowableJupiterSubclassTest.java</exclude>
                             </excludes>
                             <runOrder>alphabetical</runOrder>
                         </configuration>
@@ -1113,14 +1159,21 @@
                                 <exclude>**/HistoricTaskInstanceUpdateTest.java</exclude> <!-- http://jira.codehaus.org/browse/ACT-485 -->
                                 <exclude>**/Historic*InstanceTest.java</exclude>
                                 <exclude>**/HistoryServiceTest.java</exclude>
+                                <exclude>**/HistoryLevelServiceTest.java</exclude>
                                 <exclude>**/RepeatingServiceTaskTest.java</exclude>
                                 <exclude>**/ProcessInstanceLogQueryTest.java</exclude>
+                                <exclude>**/HistoryServiceTaskLogTest.java</exclude>
+                                <exclude>**/HistoryServiceDisableTaskLogTest.java</exclude>
                                 <exclude>org/flowable/standalone/**</exclude>
                                 <exclude>**/HistoricProcessInstanceQueryVersionTest.java</exclude>
                                 <exclude>**/NonCascadeDeleteTest.java</exclude>
                                 <exclude>**/HistoricProcessInstanceQueryAndWithExceptionTest.java</exclude>
                                 <exclude>**/HistoricJPAVariableTest.java</exclude>
                                 <exclude>**/VerifyDatabaseOperationsTest.java</exclude>
+                                <exclude>**/AsyncHistoryTest.java</exclude>
+                                <exclude>**/AsyncHistoryUpgradeTest.java</exclude>
+                                <exclude>**/ProcessInstanceLogQueryTest.java</exclude>
+                                <exclude>**/FlowableJupiterSubclassTest.java</exclude>
                             </excludes>
                             <runOrder>alphabetical</runOrder>
                         </configuration>
@@ -1471,6 +1524,56 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        
+        <profile>
+            <id>mongodb</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.flowable</groupId>
+                    <artifactId>flowable-mongodb</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.4</version>
+                        <executions>
+                            <execution>
+                                <id>change config</id>
+                                <phase>process-test-classes</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <tasks>
+                                        <echo
+                                            message="updating flowable configuration to mongodb.flowable.cfg.xml" />
+                                        <copy
+                                            file="${basedir}/../../qa/mongodb/mongodb.flowable.cfg.xml"
+                                            tofile="target/test-classes/flowable.cfg.xml"
+                                            overwrite="true" />
+                                    </tasks>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>java8</id>
+            <activation>
+                <jdk>1.8</jdk>
+            </activation>
+            <properties>
+                <!-- increase max heap to fix: SurefireBooterForkException: There was an error in the forked process
+                    [ERROR] GC overhead limit exceeded -->
+                <argLine>-Xmx3g</argLine>
+            </properties>
         </profile>
     </profiles>
 

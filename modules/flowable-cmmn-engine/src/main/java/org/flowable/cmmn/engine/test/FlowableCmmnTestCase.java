@@ -18,7 +18,11 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
+import java.time.temporal.ChronoField;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.flowable.cmmn.api.CmmnHistoryService;
 import org.flowable.cmmn.api.CmmnManagementService;
@@ -26,6 +30,7 @@ import org.flowable.cmmn.api.CmmnRepositoryService;
 import org.flowable.cmmn.api.CmmnRuntimeService;
 import org.flowable.cmmn.api.CmmnTaskService;
 import org.flowable.cmmn.api.runtime.CaseInstance;
+import org.flowable.cmmn.api.runtime.PlanItemInstance;
 import org.flowable.cmmn.engine.CmmnEngine;
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.engine.test.impl.CmmnJobTestHelper;
@@ -103,6 +108,11 @@ public abstract class FlowableCmmnTestCase {
                 .getId();
     }
 
+    protected CaseInstance deployAndStartOneHumanTaskCaseModel() {
+        deployOneHumanTaskCaseModel();
+        return cmmnRuntimeService.createCaseInstanceBuilder().caseDefinitionKey("oneTaskCase").start();
+    }
+
     protected void deployOneTaskCaseModel() {
         deploymentId = cmmnRepositoryService.createDeployment()
                 .addClasspathResource("org/flowable/cmmn/test/one-task-model.cmmn")
@@ -111,9 +121,14 @@ public abstract class FlowableCmmnTestCase {
     }
     
     protected Date setClockFixedToCurrentTime() {
-        Date date = new Date();
+        // SQL Server rounds the milliseconds, on order to be stable we set them to 0
+        Date date = Date.from(Instant.now().with(ChronoField.MILLI_OF_SECOND, 0));
         cmmnEngineConfiguration.getClock().setCurrentTime(date);
         return date;
+    }
+
+    protected void setClockTo(long epochTime) {
+        setClockTo(new Date(epochTime));
     }
     
     protected void setClockTo(Date date) {
@@ -128,9 +143,22 @@ public abstract class FlowableCmmnTestCase {
     }
 
     protected void assertCaseInstanceEnded(CaseInstance caseInstance) {
-        assertEquals("Plan item found for case instance", 0, cmmnRuntimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).count());
+        long count = cmmnRuntimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).count();
+        assertEquals(createCaseInstanceEndedErrorMessage(caseInstance, count), 0, count);
         assertEquals("Runtime case instance found", 0, cmmnRuntimeService.createCaseInstanceQuery().caseInstanceId(caseInstance.getId()).count());
         assertEquals(1, cmmnHistoryService.createHistoricCaseInstanceQuery().caseInstanceId(caseInstance.getId()).finished().count());
+    }
+
+    protected String createCaseInstanceEndedErrorMessage(CaseInstance caseInstance, long count) {
+        String errorMessage = "Plan item instances found for case instance: ";
+        if (count != 0) {
+            List<PlanItemInstance> planItemInstances = cmmnRuntimeService.createPlanItemInstanceQuery().caseInstanceId(caseInstance.getId()).list();
+            String names = planItemInstances.stream()
+                .map(planItemInstance -> planItemInstance.getName() + "(" + planItemInstance.getPlanItemDefinitionType() + ")")
+                .collect(Collectors.joining(", "));
+            errorMessage += names;
+        }
+        return errorMessage;
     }
 
     protected void assertCaseInstanceEnded(CaseInstance caseInstance, int nrOfExpectedMilestones) {

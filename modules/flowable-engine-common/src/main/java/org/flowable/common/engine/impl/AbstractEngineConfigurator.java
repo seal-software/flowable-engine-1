@@ -26,7 +26,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.ibatis.type.TypeAliasRegistry;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.flowable.common.engine.api.FlowableException;
-import org.flowable.common.engine.impl.db.DbSqlSessionFactory;
 import org.flowable.common.engine.impl.db.MybatisTypeAliasConfigurator;
 import org.flowable.common.engine.impl.db.MybatisTypeHandlerConfigurator;
 import org.flowable.common.engine.impl.persistence.entity.Entity;
@@ -84,7 +83,7 @@ public abstract class AbstractEngineConfigurator implements EngineConfigurator {
     protected abstract List<EngineDeployer> getCustomDeployers();
 
     /**
-     * @return The path to the Mybatis cfg file that's normally used for the engine (so the full cfg, not an individual mapper).
+     * @return The path to the Mybatis cfg file that is normally used for the engine (so the full cfg, not an individual mapper).
      *         Return null in case no custom mappers should be loaded.
      */
     protected abstract String getMybatisCfgPath();
@@ -219,6 +218,7 @@ public abstract class AbstractEngineConfigurator implements EngineConfigurator {
         initSessionFactories(engineConfiguration, targetEngineConfiguration);
         initEventDispatcher(engineConfiguration, targetEngineConfiguration);
         initClock(engineConfiguration, targetEngineConfiguration);
+        initVariableTypes(engineConfiguration, targetEngineConfiguration);
     }
 
     protected void initEngineConfigurations(AbstractEngineConfiguration engineConfiguration, AbstractEngineConfiguration targetEngineConfiguration) {
@@ -242,6 +242,7 @@ public abstract class AbstractEngineConfigurator implements EngineConfigurator {
         if (targetEngineConfiguration.getIdGenerator() == null) {
             targetEngineConfiguration.setIdGenerator(engineConfiguration.getIdGenerator());
         }
+        targetEngineConfiguration.setUsePrefixId(engineConfiguration.isUsePrefixId());
     }
 
     protected void initDataSource(AbstractEngineConfiguration engineConfiguration, AbstractEngineConfiguration targetEngineConfiguration) {
@@ -253,21 +254,9 @@ public abstract class AbstractEngineConfigurator implements EngineConfigurator {
     }
 
     protected void initDbSqlSessionFactory(AbstractEngineConfiguration engineConfiguration, AbstractEngineConfiguration targetEngineConfiguration) {
-        DbSqlSessionFactory dbSqlSessionFactory = engineConfiguration.getDbSqlSessionFactory();
         targetEngineConfiguration.setDbSqlSessionFactory(engineConfiguration.getDbSqlSessionFactory());
         targetEngineConfiguration.setSqlSessionFactory(engineConfiguration.getSqlSessionFactory());
-
-        if (getEntityInsertionOrder() != null) {
-            for (Class<? extends Entity> clazz : getEntityInsertionOrder()) {
-                dbSqlSessionFactory.getInsertionOrder().add(clazz);
-            }
-        }
-
-        if (getEntityDeletionOrder() != null) {
-            for (Class<? extends Entity> clazz : getEntityDeletionOrder()) {
-                dbSqlSessionFactory.getDeletionOrder().add(clazz);
-            }
-        }
+        targetEngineConfiguration.defaultInitDbSqlSessionFactoryEntitySettings(getEntityInsertionOrder(), getEntityDeletionOrder());
     }
 
     protected void initSessionFactories(AbstractEngineConfiguration engineConfiguration, AbstractEngineConfiguration targetEngineConfiguration) {
@@ -296,6 +285,12 @@ public abstract class AbstractEngineConfigurator implements EngineConfigurator {
 
     protected void initClock(AbstractEngineConfiguration engineConfiguration, AbstractEngineConfiguration targetEngineConfiguration) {
         targetEngineConfiguration.setClock(engineConfiguration.getClock());
+    }
+
+    protected void initVariableTypes(AbstractEngineConfiguration engineConfiguration, AbstractEngineConfiguration targetEngineConfiguration) {
+        if (engineConfiguration instanceof HasVariableTypes && targetEngineConfiguration instanceof HasVariableTypes) {
+            ((HasVariableTypes) targetEngineConfiguration).setVariableTypes(((HasVariableTypes) engineConfiguration).getVariableTypes());
+        }
     }
 
     protected abstract List<Class<? extends Entity>> getEntityInsertionOrder();

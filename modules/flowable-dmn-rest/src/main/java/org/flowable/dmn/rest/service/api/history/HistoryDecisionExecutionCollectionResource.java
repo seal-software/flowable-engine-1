@@ -12,6 +12,8 @@
  */
 package org.flowable.dmn.rest.service.api.history;
 
+import static org.flowable.common.rest.api.PaginateListUtil.paginateList;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +24,7 @@ import org.flowable.common.rest.api.DataResponse;
 import org.flowable.dmn.api.DmnHistoricDecisionExecutionQuery;
 import org.flowable.dmn.api.DmnHistoryService;
 import org.flowable.dmn.engine.impl.HistoricDecisionExecutionQueryProperty;
+import org.flowable.dmn.rest.service.api.DmnRestApiInterceptor;
 import org.flowable.dmn.rest.service.api.DmnRestResponseFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -57,6 +60,9 @@ public class HistoryDecisionExecutionCollectionResource {
 
     @Autowired
     protected DmnHistoryService dmnHistoryService;
+    
+    @Autowired(required=false)
+    protected DmnRestApiInterceptor restApiInterceptor;
 
     @ApiOperation(value = "List of historic decision executions", nickname ="listHistoricDecisionExecutions", tags = { "Historic Decision Executions" })
     @ApiImplicitParams({
@@ -68,6 +74,8 @@ public class HistoryDecisionExecutionCollectionResource {
             @ApiImplicitParam(name = "executionId", dataType = "string", value = "Only return historic decision executions with the given execution id.", paramType = "query"),
             @ApiImplicitParam(name = "instanceId", dataType = "string", value = "Only return historic decision executions with the given instance id.", paramType = "query"),
             @ApiImplicitParam(name = "scopeType", dataType = "string", value = "Only return historic decision executions with the given scope type.", paramType = "query"),
+            @ApiImplicitParam(name = "processInstanceIdWithChildren", dataType = "string", value = "Return all historic decision executions with the given process instance id or its entity link children.", paramType = "query"),
+            @ApiImplicitParam(name = "caseInstanceIdWithChildren", dataType = "string", value = "Return all historic decision executions with the given case instance id or its entity link children.", paramType = "query"),
             @ApiImplicitParam(name = "failed", dataType = "string", value = "Only return historic decision executions with the failed state.", paramType = "query"),
             @ApiImplicitParam(name = "tenantId", dataType = "string", value = "Only return historic decision executions with the given tenant id.", paramType = "query"),
             @ApiImplicitParam(name = "tenantIdLike", dataType = "string", value = "Only return historic decision executions like the given tenant id.", paramType = "query"),
@@ -106,6 +114,12 @@ public class HistoryDecisionExecutionCollectionResource {
         if (allRequestParams.containsKey("scopeType")) {
             historicDecisionExecutionQuery.scopeType(allRequestParams.get("scopeType"));
         }
+        if (allRequestParams.containsKey("processInstanceIdWithChildren")) {
+            historicDecisionExecutionQuery.processInstanceIdWithChildren(allRequestParams.get("processInstanceIdWithChildren"));
+        }
+        if (allRequestParams.containsKey("caseInstanceIdWithChildren")) {
+            historicDecisionExecutionQuery.caseInstanceIdWithChildren(allRequestParams.get("caseInstanceIdWithChildren"));
+        }
         if (allRequestParams.containsKey("failed")) {
             historicDecisionExecutionQuery.failed(new Boolean(allRequestParams.get("failed")));
         }
@@ -115,7 +129,12 @@ public class HistoryDecisionExecutionCollectionResource {
         if (allRequestParams.containsKey("tenantIdLike")) {
             historicDecisionExecutionQuery.tenantIdLike(allRequestParams.get("tenantIdLike"));
         }
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.accessDecisionHistoryInfoWithQuery(historicDecisionExecutionQuery);
+        }
 
-        return new HistoricDecisionExecutionsDmnPaginateList(dmnRestResponseFactory).paginateList(allRequestParams, historicDecisionExecutionQuery, "startTime", properties);
+        return paginateList(allRequestParams, historicDecisionExecutionQuery, "startTime", properties,
+            dmnRestResponseFactory::createHistoricDecisionExecutionResponseList);
     }
 }

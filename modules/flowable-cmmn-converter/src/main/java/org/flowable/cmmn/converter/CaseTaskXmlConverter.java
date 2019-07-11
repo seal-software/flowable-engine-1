@@ -32,6 +32,12 @@ public class CaseTaskXmlConverter extends TaskXmlConverter {
         CaseTask caseTask = new CaseTask();
         convertCommonTaskAttributes(xtr, caseTask);
         caseTask.setCaseRef(xtr.getAttributeValue(null, CmmnXmlConstants.ATTRIBUTE_CASE_REF));
+        
+        String fallbackToDefaultTenantValue = xtr.getAttributeValue(CmmnXmlConstants.FLOWABLE_EXTENSIONS_NAMESPACE, CmmnXmlConstants.ATTRIBUTE_FALLBACK_TO_DEFAULT_TENANT);
+        if (fallbackToDefaultTenantValue != null) {
+            caseTask.setFallbackToDefaultTenant(Boolean.valueOf(fallbackToDefaultTenantValue));
+        }
+        
         return caseTask;
     }
     

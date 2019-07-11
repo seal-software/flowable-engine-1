@@ -129,6 +129,11 @@ public interface ProcessInstanceQuery extends Query<ProcessInstanceQuery, Proces
     ProcessInstanceQuery involvedUser(String userId);
 
     /**
+     * Select the process instances with which the {@link org.flowable.idm.api.Group}s with the given ids are involved.
+     */
+    ProcessInstanceQuery involvedGroups(Set<String> groupIds);
+
+    /**
      * Only select process instances which have a global variable with the given value. The type of variable is determined based on the value, using types configured in
      * {@link ProcessEngineConfiguration#getVariableTypes()}. Byte-arrays and {@link Serializable} objects (which are not primitive type wrappers) are not supported.
      * 
@@ -360,6 +365,11 @@ public interface ProcessInstanceQuery extends Query<ProcessInstanceQuery, Proces
      * Order by process definition id (needs to be followed by {@link #asc()} or {@link #desc()}).
      */
     ProcessInstanceQuery orderByProcessDefinitionId();
+
+    /**
+     * Order by start time (needs to be followed by {@link #asc()} or {@link #desc()}).
+     */
+    ProcessInstanceQuery orderByStartTime();
 
     /**
      * Order by tenant id (needs to be followed by {@link #asc()} or {@link #desc()}).

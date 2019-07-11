@@ -13,6 +13,11 @@
 
 package org.flowable.rest.service.api.identity;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -26,8 +31,6 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import static org.junit.Assert.*;
 
 /**
  * @author Frederik Heremans
@@ -44,6 +47,7 @@ public class UserResourceTest extends BaseSpringRestTestCase {
             User newUser = identityService.newUser("testuser");
             newUser.setFirstName("Fred");
             newUser.setLastName("McDonald");
+            newUser.setDisplayName("Fred McDonald");
             newUser.setEmail("no-reply@activiti.org");
             identityService.saveUser(newUser);
             savedUser = newUser;
@@ -56,6 +60,7 @@ public class UserResourceTest extends BaseSpringRestTestCase {
             assertEquals("testuser", responseNode.get("id").textValue());
             assertEquals("Fred", responseNode.get("firstName").textValue());
             assertEquals("McDonald", responseNode.get("lastName").textValue());
+            assertEquals("Fred McDonald", responseNode.get("displayName").textValue());
             assertEquals("no-reply@activiti.org", responseNode.get("email").textValue());
             assertTrue(responseNode.get("url").textValue().endsWith(RestUrls.createRelativeResourceUrl(RestUrls.URL_USER, newUser.getId())));
 
@@ -130,6 +135,7 @@ public class UserResourceTest extends BaseSpringRestTestCase {
             ObjectNode taskUpdateRequest = objectMapper.createObjectNode();
             taskUpdateRequest.put("firstName", "Tijs");
             taskUpdateRequest.put("lastName", "Barrez");
+            taskUpdateRequest.put("displayName", "Tijs Barrez");
             taskUpdateRequest.put("email", "no-reply@alfresco.org");
             taskUpdateRequest.put("password", "updatedpassword");
 
@@ -142,6 +148,7 @@ public class UserResourceTest extends BaseSpringRestTestCase {
             assertEquals("testuser", responseNode.get("id").textValue());
             assertEquals("Tijs", responseNode.get("firstName").textValue());
             assertEquals("Barrez", responseNode.get("lastName").textValue());
+            assertEquals("Tijs Barrez", responseNode.get("displayName").textValue());
             assertEquals("no-reply@alfresco.org", responseNode.get("email").textValue());
             assertTrue(responseNode.get("url").textValue().endsWith(RestUrls.createRelativeResourceUrl(RestUrls.URL_USER, newUser.getId())));
 
@@ -149,6 +156,7 @@ public class UserResourceTest extends BaseSpringRestTestCase {
             newUser = identityService.createUserQuery().userId(newUser.getId()).singleResult();
             assertEquals("Barrez", newUser.getLastName());
             assertEquals("Tijs", newUser.getFirstName());
+            assertEquals("Tijs Barrez", newUser.getDisplayName());
             assertEquals("no-reply@alfresco.org", newUser.getEmail());
             assertEquals("updatedpassword", newUser.getPassword());
 
@@ -171,6 +179,7 @@ public class UserResourceTest extends BaseSpringRestTestCase {
             User newUser = identityService.newUser("testuser");
             newUser.setFirstName("Fred");
             newUser.setLastName("McDonald");
+            newUser.setDisplayName("Fred McDonald");
             newUser.setEmail("no-reply@activiti.org");
             identityService.saveUser(newUser);
             savedUser = newUser;
@@ -186,6 +195,7 @@ public class UserResourceTest extends BaseSpringRestTestCase {
             assertEquals("testuser", responseNode.get("id").textValue());
             assertEquals("Fred", responseNode.get("firstName").textValue());
             assertEquals("McDonald", responseNode.get("lastName").textValue());
+            assertEquals("Fred McDonald", responseNode.get("displayName").textValue());
             assertEquals("no-reply@activiti.org", responseNode.get("email").textValue());
             assertTrue(responseNode.get("url").textValue().endsWith(RestUrls.createRelativeResourceUrl(RestUrls.URL_USER, newUser.getId())));
 
@@ -193,6 +203,7 @@ public class UserResourceTest extends BaseSpringRestTestCase {
             newUser = identityService.createUserQuery().userId(newUser.getId()).singleResult();
             assertEquals("McDonald", newUser.getLastName());
             assertEquals("Fred", newUser.getFirstName());
+            assertEquals("Fred McDonald", newUser.getDisplayName());
             assertEquals("no-reply@activiti.org", newUser.getEmail());
             assertNull(newUser.getPassword());
 
@@ -215,6 +226,7 @@ public class UserResourceTest extends BaseSpringRestTestCase {
             User newUser = identityService.newUser("testuser");
             newUser.setFirstName("Fred");
             newUser.setLastName("McDonald");
+            newUser.setDisplayName("Fred McDonald");
             newUser.setEmail("no-reply@activiti.org");
             identityService.saveUser(newUser);
             savedUser = newUser;
@@ -222,6 +234,7 @@ public class UserResourceTest extends BaseSpringRestTestCase {
             ObjectNode taskUpdateRequest = objectMapper.createObjectNode();
             taskUpdateRequest.putNull("firstName");
             taskUpdateRequest.putNull("lastName");
+            taskUpdateRequest.putNull("displayName");
             taskUpdateRequest.putNull("email");
             taskUpdateRequest.putNull("password");
 
@@ -234,6 +247,7 @@ public class UserResourceTest extends BaseSpringRestTestCase {
             assertEquals("testuser", responseNode.get("id").textValue());
             assertTrue(responseNode.get("firstName").isNull());
             assertTrue(responseNode.get("lastName").isNull());
+            assertTrue(responseNode.get("displayName").isNull());
             assertTrue(responseNode.get("email").isNull());
             assertTrue(responseNode.get("url").textValue().endsWith(RestUrls.createRelativeResourceUrl(RestUrls.URL_USER, newUser.getId())));
 
@@ -241,6 +255,7 @@ public class UserResourceTest extends BaseSpringRestTestCase {
             newUser = identityService.createUserQuery().userId(newUser.getId()).singleResult();
             assertNull(newUser.getLastName());
             assertNull(newUser.getFirstName());
+            assertNull(newUser.getDisplayName());
             assertNull(newUser.getEmail());
 
         } finally {

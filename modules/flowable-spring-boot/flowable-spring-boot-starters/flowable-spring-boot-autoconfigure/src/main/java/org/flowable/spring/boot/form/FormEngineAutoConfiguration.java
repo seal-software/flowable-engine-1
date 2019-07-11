@@ -26,7 +26,6 @@ import org.flowable.spring.boot.AbstractSpringEngineAutoConfiguration;
 import org.flowable.spring.boot.BaseEngineConfigurationWithConfigurers;
 import org.flowable.spring.boot.EngineConfigurationConfigurer;
 import org.flowable.spring.boot.FlowableProperties;
-import org.flowable.spring.boot.FlowableTransactionAutoConfiguration;
 import org.flowable.spring.boot.ProcessEngineAutoConfiguration;
 import org.flowable.spring.boot.ProcessEngineServicesAutoConfiguration;
 import org.flowable.spring.boot.app.AppEngineAutoConfiguration;
@@ -55,7 +54,6 @@ import org.springframework.transaction.PlatformTransactionManager;
     FlowableFormProperties.class
 })
 @AutoConfigureAfter({
-    FlowableTransactionAutoConfiguration.class,
     AppEngineAutoConfiguration.class,
     ProcessEngineAutoConfiguration.class,
 })
@@ -120,7 +118,6 @@ public class FormEngineAutoConfiguration extends AbstractSpringEngineAutoConfigu
         public FormEngineConfigurator formEngineConfigurator(SpringFormEngineConfiguration configuration) {
             SpringFormEngineConfigurator formEngineConfigurator = new SpringFormEngineConfigurator();
             formEngineConfigurator.setFormEngineConfiguration(configuration);
-            
             invokeConfigurers(configuration);
             
             return formEngineConfigurator;
@@ -146,7 +143,7 @@ public class FormEngineAutoConfiguration extends AbstractSpringEngineAutoConfigu
         public FormEngineConfigurator formEngineConfigurator(SpringFormEngineConfiguration configuration) {
             SpringFormEngineConfigurator formEngineConfigurator = new SpringFormEngineConfigurator();
             formEngineConfigurator.setFormEngineConfiguration(configuration);
-            
+
             invokeConfigurers(configuration);
             
             return formEngineConfigurator;

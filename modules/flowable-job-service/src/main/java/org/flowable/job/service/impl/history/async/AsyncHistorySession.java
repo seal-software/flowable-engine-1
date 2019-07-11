@@ -13,6 +13,7 @@
 package org.flowable.job.service.impl.history.async;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +23,11 @@ import org.flowable.common.engine.impl.context.Context;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.common.engine.impl.interceptor.CommandContextCloseListener;
 import org.flowable.common.engine.impl.interceptor.Session;
+import org.flowable.job.service.JobServiceConfiguration;
 import org.flowable.job.service.impl.asyncexecutor.AsyncExecutor;
 import org.flowable.job.service.impl.util.CommandContextUtil;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class AsyncHistorySession implements Session {
     
@@ -39,7 +43,7 @@ public class AsyncHistorySession implements Session {
     
     protected TransactionContext transactionContext;
     protected String tenantId;
-    protected Map<String, List<Map<String, String>>> jobData;
+    protected Map<JobServiceConfiguration, AsyncHistorySessionData> sessionData;
 
     public AsyncHistorySession(CommandContext commandContext, AsyncHistoryListener asyncHistoryJobListener) {
         this.commandContext = commandContext;
@@ -69,26 +73,44 @@ public class AsyncHistorySession implements Session {
         this.commandContextCloseListener = new AsyncHistorySessionCommandContextCloseListener(this, asyncHistoryListener); 
     }
     
-    public void addHistoricData(String type, Map<String, String> data) {
-        addHistoricData(type, data, null);
+    public void addHistoricData(String type, ObjectNode data) {
+        JobServiceConfiguration jobServiceConfiguration = CommandContextUtil.getJobServiceConfiguration();
+        addHistoricData(jobServiceConfiguration, type, data, null);
     }
 
-    public void addHistoricData(String type, Map<String, String> data, String tenantId) {
+    public void addHistoricData(String type, ObjectNode data, String tenantId) {
         
+        // Different engines can call each other and all generate historical data.
+        // To make sure the context of where the data is coming from (and thus being able to process it in the right context),
+        // the JobService configuration is stored.
+        JobServiceConfiguration jobServiceConfiguration = CommandContextUtil.getJobServiceConfiguration();
+      
+        addHistoricData(jobServiceConfiguration, type, data, tenantId);
+    }
+    
+    public void addHistoricData(JobServiceConfiguration jobServiceConfiguration, String type, ObjectNode data) {
+        addHistoricData(jobServiceConfiguration, type, data, null);
+    }
+
+    public void addHistoricData(JobServiceConfiguration jobServiceConfiguration, String type, ObjectNode data, String tenantId) {
         data.put(TIMESTAMP, AsyncHistoryDateUtil.formatDate(CommandContextUtil.getJobServiceConfiguration(commandContext).getClock().getCurrentTime()));
         
-        if (jobData == null) {
-            jobData = new LinkedHashMap<>(); // linked: insertion order is important
+        if (sessionData == null) {
+            sessionData = new HashMap<>();
             commandContext.addCloseListener(commandContextCloseListener);
         }
+        
+        AsyncHistorySessionData asyncHistorySessionData = sessionData.get(jobServiceConfiguration);
+        if (asyncHistorySessionData == null) {
+            asyncHistorySessionData = new AsyncHistorySessionData();
+            sessionData.put(jobServiceConfiguration, asyncHistorySessionData); 
+        }
+        
         if (tenantId != null) {
             this.tenantId = tenantId;
         }
         
-        if (!jobData.containsKey(type)) {
-            jobData.put(type, new ArrayList<>(1));
-        }
-        jobData.get(type).add(data);
+        asyncHistorySessionData.addJobData(type, data);
     }
     
     @Override
@@ -109,12 +131,12 @@ public class AsyncHistorySession implements Session {
         this.tenantId = tenantId;
     }
 
-    public Map<String, List<Map<String, String>>> getJobData() {
-        return jobData;
+    public Map<JobServiceConfiguration, AsyncHistorySessionData> getSessionData() {
+        return sessionData;
     }
 
-    public void setJobData(Map<String, List<Map<String, String>>> jobData) {
-        this.jobData = jobData;
+    public void setSessionData(Map<JobServiceConfiguration, AsyncHistorySessionData> sessionData) {
+        this.sessionData = sessionData;
     }
 
     public List<String> getJobDataTypes() {
@@ -133,4 +155,25 @@ public class AsyncHistorySession implements Session {
         this.transactionContext = transactionContext;
     }
     
+    /**
+     * Wrapper for the async history job data, to avoid messing with maps and lists.
+     */
+    public static class AsyncHistorySessionData { 
+        
+        protected Map<String, List<ObjectNode>> jobData = new LinkedHashMap<>(); // A map of {type, list of map-data (the historical event)}. Linked because insertion order is important
+        
+        public Map<String, List<ObjectNode>> getJobData() {
+            return jobData;
+        }
+        public void setJobData(Map<String, List<ObjectNode>> jobData) {
+            this.jobData = jobData;
+        }
+        public void addJobData(String type, ObjectNode data) {
+            if (!jobData.containsKey(type)) {
+                jobData.put(type, new ArrayList<>(1));
+            }
+            jobData.get(type).add(data);
+        }
+        
+    }
 }

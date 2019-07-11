@@ -13,14 +13,16 @@
 package org.flowable.cmmn.engine.impl.persistence.entity;
 
 import org.flowable.cmmn.api.history.HistoricPlanItemInstance;
+import org.flowable.common.engine.impl.db.HasRevision;
 import org.flowable.common.engine.impl.persistence.entity.Entity;
 
 import java.util.Date;
 
 /**
  * @author Dennis Federico
+ * @author Joram Barrez
  */
-public interface HistoricPlanItemInstanceEntity extends Entity, HistoricPlanItemInstance {
+public interface HistoricPlanItemInstanceEntity extends Entity, HasRevision, HistoricPlanItemInstance {
 
     @Override
     void setId(String id);
@@ -43,7 +45,7 @@ public interface HistoricPlanItemInstanceEntity extends Entity, HistoricPlanItem
 
     void setPlanItemDefinitionType(String planItemDefinitionType);
 
-    void setCreatedTime(Date createdTime);
+    void setCreateTime(Date createTime);
 
     void setLastAvailableTime(Date availableTime);
 
@@ -72,6 +74,10 @@ public interface HistoricPlanItemInstanceEntity extends Entity, HistoricPlanItem
     void setReferenceId(String referenceId);
 
     void setReferenceType(String referenceType);
+
+    void setEntryCriterionId(String entryCriterionId);
+
+    void setExitCriterionId(String exitCriterionId);
 
     void setTenantId(String tenantId);
 

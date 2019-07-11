@@ -15,29 +15,29 @@ package org.flowable.task.service;
 import java.util.List;
 import java.util.Map;
 
-import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.delegate.event.FlowableEventDispatcher;
 import org.flowable.common.engine.api.delegate.event.FlowableEventListener;
 import org.flowable.common.engine.impl.AbstractServiceConfiguration;
-import org.flowable.common.engine.impl.cfg.IdGenerator;
 import org.flowable.idm.api.IdmIdentityService;
+import org.flowable.task.api.TaskQueryInterceptor;
+import org.flowable.task.api.history.HistoricTaskQueryInterceptor;
 import org.flowable.task.service.history.InternalHistoryTaskManager;
 import org.flowable.task.service.impl.HistoricTaskServiceImpl;
 import org.flowable.task.service.impl.TaskServiceImpl;
 import org.flowable.task.service.impl.persistence.entity.HistoricTaskInstanceEntityManager;
 import org.flowable.task.service.impl.persistence.entity.HistoricTaskInstanceEntityManagerImpl;
+import org.flowable.task.service.impl.persistence.entity.HistoricTaskLogEntryEntityManager;
+import org.flowable.task.service.impl.persistence.entity.HistoricTaskLogEntryEntityManagerImpl;
 import org.flowable.task.service.impl.persistence.entity.TaskEntityManager;
 import org.flowable.task.service.impl.persistence.entity.TaskEntityManagerImpl;
 import org.flowable.task.service.impl.persistence.entity.data.HistoricTaskInstanceDataManager;
+import org.flowable.task.service.impl.persistence.entity.data.HistoricTaskLogEntryDataManager;
 import org.flowable.task.service.impl.persistence.entity.data.TaskDataManager;
+import org.flowable.task.service.impl.persistence.entity.data.impl.MyBatisHistoricTaskLogEntryDataManager;
 import org.flowable.task.service.impl.persistence.entity.data.impl.MybatisHistoricTaskInstanceDataManager;
 import org.flowable.task.service.impl.persistence.entity.data.impl.MybatisTaskDataManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TaskServiceConfiguration extends AbstractServiceConfiguration {
-
-    protected static final Logger LOGGER = LoggerFactory.getLogger(TaskServiceConfiguration.class);
 
     public static final String DEFAULT_MYBATIS_MAPPING_FILE = "org/flowable/task/service/db/mapping/mappings.xml";
 
@@ -53,11 +53,13 @@ public class TaskServiceConfiguration extends AbstractServiceConfiguration {
 
     protected TaskDataManager taskDataManager;
     protected HistoricTaskInstanceDataManager historicTaskInstanceDataManager;
+    protected HistoricTaskLogEntryDataManager historicTaskLogDataManager;
 
     // ENTITY MANAGERS /////////////////////////////////////////////////
     protected TaskEntityManager taskEntityManager;
     protected HistoricTaskInstanceEntityManager historicTaskInstanceEntityManager;
-    
+    protected HistoricTaskLogEntryEntityManager historicTaskLogEntryEntityManager;
+
     protected InternalTaskVariableScopeResolver internalTaskVariableScopeResolver;
     protected InternalHistoryTaskManager internalHistoryTaskManager;
     protected InternalTaskLocalizationManager internalTaskLocalizationManager;
@@ -66,27 +68,27 @@ public class TaskServiceConfiguration extends AbstractServiceConfiguration {
     protected boolean enableTaskRelationshipCounts;
     protected boolean enableLocalization;
     
+    protected TaskQueryInterceptor taskQueryInterceptor;
+    protected HistoricTaskQueryInterceptor historicTaskQueryInterceptor;
     protected int taskQueryLimit;
     protected int historicTaskQueryLimit;
-    
-    protected IdGenerator idGenerator;
 
     protected TaskPostProcessor taskPostProcessor;
+
+    // Events
+    protected boolean enableHistoricTaskLogging;
+    
+    public TaskServiceConfiguration(String engineName) {
+        super(engineName);
+    }
 
     // init
     // /////////////////////////////////////////////////////////////////////
 
     public void init() {
-        checkIdGenerator();
         initDataManagers();
         initEntityManagers();
         initTaskPostProcessor();
-    }
-
-    protected void checkIdGenerator() {
-        if (this.idGenerator == null) {
-            throw new FlowableException("Id generator for task configuration must be initialized");
-        }
     }
 
     // Data managers
@@ -99,6 +101,9 @@ public class TaskServiceConfiguration extends AbstractServiceConfiguration {
         if (historicTaskInstanceDataManager == null) {
             historicTaskInstanceDataManager = new MybatisHistoricTaskInstanceDataManager();
         }
+        if (historicTaskLogDataManager == null) {
+            historicTaskLogDataManager = new MyBatisHistoricTaskLogEntryDataManager();
+        }
     }
 
     public void initEntityManagers() {
@@ -107,6 +112,9 @@ public class TaskServiceConfiguration extends AbstractServiceConfiguration {
         }
         if (historicTaskInstanceEntityManager == null) {
             historicTaskInstanceEntityManager = new HistoricTaskInstanceEntityManagerImpl(this, historicTaskInstanceDataManager);
+        }
+        if (historicTaskLogEntryEntityManager == null) {
+            historicTaskLogEntryEntityManager = new HistoricTaskLogEntryEntityManagerImpl(this, historicTaskLogDataManager);
         }
     }
 
@@ -182,6 +190,15 @@ public class TaskServiceConfiguration extends AbstractServiceConfiguration {
         return this;
     }
 
+    public HistoricTaskLogEntryEntityManager getHistoricTaskLogEntryEntityManager() {
+        return historicTaskLogEntryEntityManager;
+    }
+
+    public TaskServiceConfiguration setHistoricTaskLogEntryEntityManager(HistoricTaskLogEntryEntityManager historicTaskLogEntryEntityManager) {
+        this.historicTaskLogEntryEntityManager = historicTaskLogEntryEntityManager;
+        return this;
+    }
+
     public InternalTaskVariableScopeResolver getInternalTaskVariableScopeResolver() {
         return internalTaskVariableScopeResolver;
     }
@@ -232,6 +249,24 @@ public class TaskServiceConfiguration extends AbstractServiceConfiguration {
         return this;
     }
 
+    public TaskQueryInterceptor getTaskQueryInterceptor() {
+        return taskQueryInterceptor;
+    }
+
+    public TaskServiceConfiguration setTaskQueryInterceptor(TaskQueryInterceptor taskQueryInterceptor) {
+        this.taskQueryInterceptor = taskQueryInterceptor;
+        return this;
+    }
+
+    public HistoricTaskQueryInterceptor getHistoricTaskQueryInterceptor() {
+        return historicTaskQueryInterceptor;
+    }
+
+    public TaskServiceConfiguration setHistoricTaskQueryInterceptor(HistoricTaskQueryInterceptor historicTaskQueryInterceptor) {
+        this.historicTaskQueryInterceptor = historicTaskQueryInterceptor;
+        return this;
+    }
+
     public int getTaskQueryLimit() {
         return taskQueryLimit;
     }
@@ -247,6 +282,15 @@ public class TaskServiceConfiguration extends AbstractServiceConfiguration {
 
     public TaskServiceConfiguration setHistoricTaskQueryLimit(int historicTaskQueryLimit) {
         this.historicTaskQueryLimit = historicTaskQueryLimit;
+        return this;
+    }
+
+    public boolean isEnableHistoricTaskLogging() {
+        return enableHistoricTaskLogging;
+    }
+
+    public TaskServiceConfiguration setEnableHistoricTaskLogging(boolean enableHistoricTaskLogging) {
+        this.enableHistoricTaskLogging = enableHistoricTaskLogging;
         return this;
     }
 
@@ -272,15 +316,6 @@ public class TaskServiceConfiguration extends AbstractServiceConfiguration {
     public TaskServiceConfiguration setTypedEventListeners(Map<String, List<FlowableEventListener>> typedEventListeners) {
         this.typedEventListeners = typedEventListeners;
         return this;
-    }
-
-    public TaskServiceConfiguration setIdGenerator(IdGenerator idGenerator) {
-        this.idGenerator = idGenerator;
-        return this;
-    }
-
-    public IdGenerator getIdGenerator() {
-        return idGenerator;
     }
 
     public TaskPostProcessor getTaskPostProcessor() {

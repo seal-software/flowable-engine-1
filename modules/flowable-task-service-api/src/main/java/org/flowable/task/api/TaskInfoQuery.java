@@ -15,6 +15,7 @@ package org.flowable.task.api;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.common.engine.api.query.Query;
@@ -139,7 +140,12 @@ public interface TaskInfoQuery<T extends TaskInfoQuery<?, ?>, V extends TaskInfo
      * Only select tasks for which there exist an {@link IdentityLink} with the given user, including tasks which have been assigned to the given user (assignee) or owned by the given user (owner).
      */
     T taskInvolvedUser(String involvedUser);
-    
+
+    /**
+     * Only select tasks for which there exist an {@link IdentityLink} with the given Groups.
+     */
+    T taskInvolvedGroups(Set<String> involvedGroup);
+
     /**
      * Allows to select a task using {@link #taskCandidateGroup(String)} {@link #taskCandidateGroupIn(List)} or {@link #taskCandidateUser(String)} but ignore the assignee value instead of querying for an empty assignee.
      */
@@ -237,6 +243,16 @@ public interface TaskInfoQuery<T extends TaskInfoQuery<?, ?>, V extends TaskInfo
      * Only select tasks for the given scope definition identifier. 
      */
     T scopeDefinitionId(String scopeDefinitionId);
+    
+    /**
+     * Select all tasks for the given process instance id and its children.
+     */
+    T processInstanceIdWithChildren(String processInstanceId);
+    
+    /**
+     * Select all tasks for the given case instance id and its children.
+     */
+    T caseInstanceIdWithChildren(String caseInstanceId);
 
     /**
      * Only select tasks that are created on the given date.
@@ -257,6 +273,16 @@ public interface TaskInfoQuery<T extends TaskInfoQuery<?, ?>, V extends TaskInfo
      * Only select tasks with the given category.
      */
     T taskCategory(String category);
+    
+    /**
+     * Only select tasks with form key.
+     */
+    T taskWithFormKey();
+
+    /**
+     * Only select tasks with the given formKey.
+     */
+    T taskFormKey(String formKey);
 
     /**
      * Only select tasks with the given taskDefinitionKey. The task definition key is the id of the userTask: &lt;userTask id="xxx" .../&gt;

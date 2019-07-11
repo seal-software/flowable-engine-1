@@ -139,20 +139,31 @@ public class FormInstanceCollectionResource extends BaseFormInstanceResource {
     public void storeFormInstance(@RequestBody FormRequest formRequest, HttpServletRequest request) {
 
         FormInfo formModel;
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.storeFormInstance(formRequest);
+        }
+        
+        boolean fallbackToDefaultTenant = false;
+        if (formRequest.getFallbackToDefaultTenant() != null) {
+            fallbackToDefaultTenant = formRequest.getFallbackToDefaultTenant();
+        }
 
         if (formRequest.getFormDefinitionKey() != null) {
             formModel = formService.getFormModelWithVariablesByKey(
                     formRequest.getFormDefinitionKey(),
                     formRequest.getTaskId(),
                     formRequest.getVariables(),
-                    formRequest.getTenantId());
+                    formRequest.getTenantId(),
+                    fallbackToDefaultTenant);
             
         } else if (formRequest.getFormDefinitionId() != null) {
             formModel = formService.getFormModelWithVariablesById(
                     formRequest.getFormDefinitionId(),
                     formRequest.getTaskId(),
                     formRequest.getVariables(),
-                    formRequest.getTenantId());
+                    formRequest.getTenantId(),
+                    fallbackToDefaultTenant);
             
         } else {
             throw new FlowableIllegalArgumentException("Either form definition key or form definition id must be provided in the request");
@@ -164,11 +175,11 @@ public class FormInstanceCollectionResource extends BaseFormInstanceResource {
 
         if (formRequest.getScopeId() != null) {
             formService.createFormInstanceWithScopeId(formRequest.getVariables(), formModel, formRequest.getTaskId(),
-                            formRequest.getScopeId(), formRequest.getScopeType(), formRequest.getScopeDefinitionId());
+                            formRequest.getScopeId(), formRequest.getScopeType(), formRequest.getScopeDefinitionId(), formRequest.getTenantId(), null);
             
         } else {
             formService.createFormInstance(formRequest.getVariables(), formModel, formRequest.getTaskId(),
-                            formRequest.getProcessInstanceId(), formRequest.getProcessDefinitionId());
+                            formRequest.getProcessInstanceId(), formRequest.getProcessDefinitionId(), formRequest.getTenantId(), null);
         }
     }
 }

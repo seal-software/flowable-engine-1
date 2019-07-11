@@ -20,56 +20,76 @@ import java.util.Map;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.job.service.impl.history.async.transformer.HistoryJsonTransformer;
 import org.flowable.job.service.impl.persistence.entity.HistoryJobEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class AsyncHistoryJobHandler extends AbstractAsyncHistoryJobHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AsyncHistoryJobHandler.class);
-
     protected Map<String, List<HistoryJsonTransformer>> historyJsonTransformers = new HashMap<>();
+    protected HistoryJsonTransformer defaultHistoryJsonTransformer;
     
     public AsyncHistoryJobHandler(String jobType) {
         super(jobType);
     }
 
     public void addHistoryJsonTransformer(HistoryJsonTransformer historyJsonTransformer) {
-        String type = historyJsonTransformer.getType();
-        if (!historyJsonTransformers.containsKey(type)) {
-            historyJsonTransformers.put(type, new ArrayList<>());
+        List<String> types = historyJsonTransformer.getTypes();
+
+        for (String type : types) {
+            if (!historyJsonTransformers.containsKey(type)) {
+                historyJsonTransformers.put(type, new ArrayList<>());
+            }
+            historyJsonTransformers.get(type).add(historyJsonTransformer);
         }
-        historyJsonTransformers.get(historyJsonTransformer.getType()).add(historyJsonTransformer);
     }
 
     @Override
     protected void processHistoryJson(CommandContext commandContext, HistoryJobEntity job, JsonNode historyNode) {
         
-        String type = historyNode.get(HistoryJsonTransformer.FIELD_NAME_TYPE).asText();
+        String type = null;
+        if (historyNode.has(HistoryJsonTransformer.FIELD_NAME_TYPE)) {
+            type = historyNode.get(HistoryJsonTransformer.FIELD_NAME_TYPE).asText();
+        }
         ObjectNode historicalJsonData = (ObjectNode) historyNode.get(HistoryJsonTransformer.FIELD_NAME_DATA);
 
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace("Handling async history job (id={}, type={})", job.getId(), type);
+        if (logger.isTraceEnabled()) {
+            logger.trace("Handling async history job (id={}, type={})", job.getId(), type);
         }
 
         List<HistoryJsonTransformer> transformers = historyJsonTransformers.get(type);
         if (transformers != null && !transformers.isEmpty()) {
-            for (HistoryJsonTransformer transformer : transformers) {
-                if (transformer.isApplicable(historicalJsonData, commandContext)) {
-                    transformer.transformJson(job, historicalJsonData, commandContext);
+            executeHistoryTransformers(commandContext, job, historicalJsonData, transformers);
+        } else {
+            handleNoMatchingHistoryTransformer(commandContext, job, historicalJsonData, type);
+        }
+    }
 
-                } else {
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Could not handle history job (id={}) for transformer {}. as it is not applicable. Unacquiring. {}", job.getId(), transformer.getType(), historicalJsonData);
-                    }
-                    throw new AsyncHistoryJobNotApplicableException();
+    protected void executeHistoryTransformers(CommandContext commandContext, HistoryJobEntity job,
+            ObjectNode historicalJsonData, List<HistoryJsonTransformer> transformers) {
+        for (HistoryJsonTransformer transformer : transformers) {
+            if (transformer.isApplicable(historicalJsonData, commandContext)) {
+                transformer.transformJson(job, historicalJsonData, commandContext);
 
+            } else {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Could not handle history job (id={}) for transformer {}. as it is not applicable. Unacquiring. {}", job.getId(), transformer.getTypes(), historicalJsonData);
                 }
+                throw new AsyncHistoryJobNotApplicableException("Job is not applicable for transformer types: " + transformer.getTypes());
+
+            }
+        }
+    }
+
+    protected void handleNoMatchingHistoryTransformer(CommandContext commandContext, HistoryJobEntity job, ObjectNode historicalData, String type) {
+        if (defaultHistoryJsonTransformer != null) {
+            if (defaultHistoryJsonTransformer.isApplicable(historicalData, commandContext)) {
+                defaultHistoryJsonTransformer.transformJson(job, historicalData, commandContext);
+            } else {
+                throw new AsyncHistoryJobNotApplicableException("Job is not applicable for default history json transformer types: " + defaultHistoryJsonTransformer.getTypes());
             }
         } else {
-            LOGGER.debug("Cannot transform history json: no transformers found for type {}", type);
+            logger.warn("Cannot transform history json: no transformers found for type {}", type);
         }
     }
 
@@ -81,4 +101,12 @@ public class AsyncHistoryJobHandler extends AbstractAsyncHistoryJobHandler {
         this.historyJsonTransformers = historyJsonTransformers;
     }
 
+    public HistoryJsonTransformer getDefaultHistoryJsonTransformer() {
+        return defaultHistoryJsonTransformer;
+    }
+
+    public void setDefaultHistoryJsonTransformer(HistoryJsonTransformer defaultHistoryJsonTransformer) {
+        this.defaultHistoryJsonTransformer = defaultHistoryJsonTransformer;
+    }
+    
 }

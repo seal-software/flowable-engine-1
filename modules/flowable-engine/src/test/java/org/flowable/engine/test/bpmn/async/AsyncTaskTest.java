@@ -12,6 +12,8 @@
  */
 package org.flowable.engine.test.bpmn.async;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import java.util.Date;
 import java.util.List;
 
@@ -26,6 +28,7 @@ import org.flowable.engine.test.Deployment;
 import org.flowable.job.api.Job;
 import org.flowable.variable.api.history.HistoricVariableInstance;
 import org.junit.Assert;
+import org.junit.jupiter.api.Test;
 
 /**
  * 
@@ -35,6 +38,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
 
     public static boolean INVOCATION;
 
+    @Test
     @Deployment
     public void testAsyncServiceNoListeners() {
         INVOCATION = false;
@@ -45,7 +49,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         // the service was not invoked:
         assertFalse(INVOCATION);
 
-        waitForJobExecutorToProcessAllJobs(5000L, 100L);
+        waitForJobExecutorToProcessAllJobs(7000L, 100L);
 
         // the service was invoked
         assertTrue(INVOCATION);
@@ -53,6 +57,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         assertEquals(0, managementService.createJobQuery().count());
     }
 
+    @Test
     @Deployment
     public void testAsyncServiceListeners() {
         String pid = runtimeService.startProcessInstanceByKey("asyncService").getProcessInstanceId();
@@ -60,11 +65,12 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         // the listener was not yet invoked:
         assertNull(runtimeService.getVariable(pid, "listener"));
 
-        waitForJobExecutorToProcessAllJobs(5000L, 100L);
+        waitForJobExecutorToProcessAllJobs(7000L, 100L);
 
         assertEquals(0, managementService.createJobQuery().count());
     }
 
+    @Test
     @Deployment
     public void testAsyncServiceConcurrent() {
         INVOCATION = false;
@@ -75,7 +81,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         // the service was not invoked:
         assertFalse(INVOCATION);
 
-        waitForJobExecutorToProcessAllJobs(5000L, 100L);
+        waitForJobExecutorToProcessAllJobs(7000L, 100L);
 
         // the service was invoked
         assertTrue(INVOCATION);
@@ -83,6 +89,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         assertEquals(0, managementService.createJobQuery().count());
     }
 
+    @Test
     @Deployment
     public void testAsyncServiceMultiInstance() {
         INVOCATION = false;
@@ -93,7 +100,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         // the service was not invoked:
         assertFalse(INVOCATION);
 
-        waitForJobExecutorToProcessAllJobs(5000L, 100L);
+        waitForJobExecutorToProcessAllJobs(7000L, 100L);
 
         // the service was invoked
         assertTrue(INVOCATION);
@@ -101,6 +108,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         assertEquals(0, managementService.createJobQuery().count());
     }
 
+    @Test
     @Deployment
     public void testFailingAsyncServiceTimer() {
         // start process
@@ -109,12 +117,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         assertEquals(1, managementService.createJobQuery().count());
         Job job = managementService.createJobQuery().singleResult();
 
-        try {
-            managementService.executeJob(job.getId());
-            fail();
-        } catch (Exception e) {
-            // exception expected
-        }
+        assertThatThrownBy(() -> managementService.executeJob(job.getId()));
 
         // the service failed: the execution is still sitting in the service task:
         Execution execution = null;
@@ -141,7 +144,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         assertEquals(2, managementService.createJobQuery().count());
 
         // let 'max-retires' on the message be reached
-        waitForJobExecutorToProcessAllJobs(5000L, 100L);
+        waitForJobExecutorToProcessAllJobs(7000L, 100L);
 
         // the service failed: the execution is still sitting in the service
         // task:
@@ -155,7 +158,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
 
         // now the timer triggers:
         Context.getProcessEngineConfiguration().getClock().setCurrentTime(new Date(System.currentTimeMillis() + 10000));
-        waitForJobExecutorToProcessAllJobs(5000L, 100L);
+        waitForJobExecutorToProcessAllJobs(7000L, 100L);
 
         // and we are done:
         assertNull(runtimeService.createExecutionQuery().singleResult());
@@ -164,6 +167,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
 
     }
 
+    @Test
     @Deployment
     public void testAsyncServiceSubProcessTimer() {
         INVOCATION = false;
@@ -175,7 +179,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         // the service was not invoked:
         assertFalse(INVOCATION);
 
-        waitForJobExecutorToProcessAllJobs(5000L, 200L);
+        waitForJobExecutorToProcessAllJobs(7000L, 200L);
 
         // the service was invoked
         assertTrue(INVOCATION);
@@ -184,6 +188,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         assertEquals(0, managementService.createJobQuery().count());
     }
 
+    @Test
     @Deployment
     public void testAsyncServiceSubProcess() {
         // start process
@@ -191,13 +196,14 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
 
         assertEquals(1, managementService.createJobQuery().count());
 
-        waitForJobExecutorToProcessAllJobs(5000L, 100L);
+        waitForJobExecutorToProcessAllJobs(7000L, 100L);
 
         // both the timer and the message are cancelled
         assertEquals(0, managementService.createJobQuery().count());
 
     }
 
+    @Test
     @Deployment
     public void testAsyncTask() {
         // start process
@@ -205,12 +211,13 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         // now there should be one job in the database:
         assertEquals(1, managementService.createJobQuery().count());
 
-        waitForJobExecutorToProcessAllJobs(5000L, 200L);
+        waitForJobExecutorToProcessAllJobs(7000L, 200L);
 
         // the job is done
         assertEquals(0, managementService.createJobQuery().count());
     }
 
+    @Test
     @Deployment
     public void testAsyncEndEvent() {
         // start process
@@ -242,6 +249,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         }
     }
 
+    @Test
     @Deployment
     public void testAsyncScript() {
         // start process
@@ -258,7 +266,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         }
         assertNull(runtimeService.getVariable(eid, "invoked"));
 
-        waitForJobExecutorToProcessAllJobs(5000L, 100L);
+        waitForJobExecutorToProcessAllJobs(7000L, 100L);
 
         // and the job is done
         assertEquals(0, managementService.createJobQuery().count());
@@ -269,6 +277,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         runtimeService.trigger(eid);
     }
 
+    @Test
     @Deployment(resources = { "org/flowable/engine/test/bpmn/async/AsyncTaskTest.testAsyncCallActivity.bpmn20.xml",
             "org/flowable/engine/test/bpmn/async/AsyncTaskTest.testAsyncServiceNoListeners.bpmn20.xml" })
     public void testAsyncCallActivity() throws Exception {
@@ -283,14 +292,16 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         assertEquals(0, runtimeService.createProcessInstanceQuery().count());
     }
 
+    @Test
     @Deployment(resources = { "org/flowable/engine/test/bpmn/async/AsyncTaskTest.testBasicAsyncCallActivity.bpmn20.xml", "org/flowable/engine/test/bpmn/StartToEndTest.testStartToEnd.bpmn20.xml" })
     public void testBasicAsyncCallActivity() {
         runtimeService.startProcessInstanceByKey("myProcess");
         Assert.assertEquals("There should be one job available.", 1, managementService.createJobQuery().count());
-        waitForJobExecutorToProcessAllJobs(5000L, 250L);
+        waitForJobExecutorToProcessAllJobs(7000L, 250L);
         assertEquals(0, managementService.createJobQuery().count());
     }
 
+    @Test
     @Deployment
     public void testAsyncUserTask() {
         // start process
@@ -304,7 +315,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
         // there is no usertask
         assertNull(taskService.createTaskQuery().singleResult());
 
-        waitForJobExecutorToProcessAllJobs(5000L, 250L);
+        waitForJobExecutorToProcessAllJobs(7000L, 250L);
         // the listener was now invoked:
         assertNotNull(runtimeService.getVariable(pid, "listener"));
         // the task listener was now invoked:
@@ -320,6 +331,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
 
     }
 
+    @Test
     @Deployment
     public void testMultiInstanceAsyncTask() {
         // start process
@@ -350,6 +362,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
             int startCount = 0;
             int taskCount = 0;
             int endCount = 0;
+            int sequenceFlowCount = 0;
             for (HistoricActivityInstance historicActivityInstance : historicActivities) {
                 if ("task".equals(historicActivityInstance.getActivityId())) {
                     taskCount++;
@@ -360,6 +373,9 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
                 } else if ("theEnd".equals(historicActivityInstance.getActivityId())) {
                     endCount++;
 
+                } else if (historicActivityInstance.getActivityId().contains("_flow_")) {
+                    sequenceFlowCount++;
+
                 } else {
                     Assert.fail("Unexpected activity found " + historicActivityInstance.getActivityId());
                 }
@@ -367,10 +383,12 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
 
             assertEquals(1, startCount);
             assertEquals(3, taskCount);
+            assertEquals(2, sequenceFlowCount);
             assertEquals(1, endCount);
         }
     }
 
+    @Test
     @Deployment
     public void testMultiInstanceTask() {
         // start process
@@ -384,6 +402,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
             int startCount = 0;
             int taskCount = 0;
             int endCount = 0;
+            int sequenceFlowCount = 0;
             for (HistoricActivityInstance historicActivityInstance : historicActivities) {
                 if ("task".equals(historicActivityInstance.getActivityId())) {
                     taskCount++;
@@ -394,6 +413,9 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
                 } else if ("theEnd".equals(historicActivityInstance.getActivityId())) {
                     endCount++;
 
+                } else if (historicActivityInstance.getActivityId().contains("_flow_")) {
+                    sequenceFlowCount++;
+
                 } else {
                     Assert.fail("Unexpected activity found " + historicActivityInstance.getActivityId());
                 }
@@ -401,10 +423,12 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
 
             assertEquals(1, startCount);
             assertEquals(3, taskCount);
+            assertEquals(2, sequenceFlowCount);
             assertEquals(1, endCount);
         }
     }
 
+    @Test
     @Deployment
     public void testMultiInstanceAsyncSequentialTask() {
         // start process
@@ -435,6 +459,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
             int startCount = 0;
             int taskCount = 0;
             int endCount = 0;
+            int sequenceFlowCount = 0;
             for (HistoricActivityInstance historicActivityInstance : historicActivities) {
                 if ("task".equals(historicActivityInstance.getActivityId())) {
                     taskCount++;
@@ -445,6 +470,9 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
                 } else if ("theEnd".equals(historicActivityInstance.getActivityId())) {
                     endCount++;
 
+                } else if (historicActivityInstance.getActivityId().contains("_flow_")) {
+                    sequenceFlowCount++;
+
                 } else {
                     Assert.fail("Unexpected activity found " + historicActivityInstance.getActivityId());
                 }
@@ -452,10 +480,12 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
 
             assertEquals(1, startCount);
             assertEquals(3, taskCount);
+            assertEquals(2, sequenceFlowCount);
             assertEquals(1, endCount);
         }
     }
 
+    @Test
     @Deployment
     public void testMultiInstanceSequentialTask() {
         // start process
@@ -469,6 +499,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
             int startCount = 0;
             int taskCount = 0;
             int endCount = 0;
+            int sequenceFlowCount = 0;
             for (HistoricActivityInstance historicActivityInstance : historicActivities) {
                 if ("task".equals(historicActivityInstance.getActivityId())) {
                     taskCount++;
@@ -479,6 +510,9 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
                 } else if ("theEnd".equals(historicActivityInstance.getActivityId())) {
                     endCount++;
 
+                } else if (historicActivityInstance.getActivityId().contains("_flow_")) {
+                    sequenceFlowCount++;
+
                 } else {
                     Assert.fail("Unexpected activity found " + historicActivityInstance.getActivityId());
                 }
@@ -486,6 +520,7 @@ public class AsyncTaskTest extends PluggableFlowableTestCase {
 
             assertEquals(1, startCount);
             assertEquals(3, taskCount);
+            assertEquals(2, sequenceFlowCount);
             assertEquals(1, endCount);
         }
     }

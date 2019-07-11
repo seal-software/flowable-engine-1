@@ -12,26 +12,6 @@
  */
 package org.flowable.cmmn.test.task;
 
-import org.flowable.cmmn.api.history.HistoricCaseInstance;
-import org.flowable.cmmn.api.runtime.CaseInstance;
-import org.flowable.cmmn.api.runtime.PlanItemInstance;
-import org.flowable.cmmn.engine.test.CmmnDeployment;
-import org.flowable.cmmn.engine.test.FlowableCmmnTestCase;
-import org.flowable.common.engine.api.FlowableException;
-import org.flowable.common.engine.api.scope.ScopeTypes;
-import org.flowable.common.engine.impl.history.HistoryLevel;
-import org.flowable.identitylink.api.IdentityLinkType;
-import org.flowable.identitylink.service.impl.persistence.entity.IdentityLinkEntityImpl;
-import org.flowable.task.api.Task;
-import org.flowable.task.api.history.HistoricTaskInstance;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import java.util.Collections;
-import java.util.Set;
-import java.util.stream.Stream;
-
 import static java.util.stream.Collectors.toSet;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -39,6 +19,35 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import org.flowable.cmmn.api.history.HistoricCaseInstance;
+import org.flowable.cmmn.api.runtime.CaseInstance;
+import org.flowable.cmmn.api.runtime.PlanItemInstance;
+import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
+import org.flowable.cmmn.engine.test.CmmnDeployment;
+import org.flowable.cmmn.engine.test.FlowableCmmnTestCase;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.scope.ScopeTypes;
+import org.flowable.common.engine.impl.history.HistoryLevel;
+import org.flowable.common.engine.impl.interceptor.CommandExecutor;
+import org.flowable.entitylink.api.EntityLink;
+import org.flowable.entitylink.api.EntityLinkService;
+import org.flowable.entitylink.api.EntityLinkType;
+import org.flowable.entitylink.api.HierarchyType;
+import org.flowable.entitylink.api.history.HistoricEntityLink;
+import org.flowable.entitylink.api.history.HistoricEntityLinkService;
+import org.flowable.identitylink.api.IdentityLinkType;
+import org.flowable.identitylink.service.impl.persistence.entity.IdentityLinkEntityImpl;
+import org.flowable.task.api.Task;
+import org.flowable.task.api.history.HistoricTaskInstance;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 /**
  * @author Joram Barrez
@@ -212,8 +221,7 @@ public class CmmnTaskServiceTest extends FlowableCmmnTestCase {
             assertThat(taskFromQuery.getScopeId(), is("testScopeId"));
             assertThat(taskFromQuery.getScopeType(), is("testScopeType"));
         } finally {
-            cmmnTaskService.deleteTask(task.getId());
-            cmmnHistoryService.deleteHistoricTaskInstance(task.getId());
+            cmmnTaskService.deleteTask(task.getId(), true);
         }
     }
 
@@ -226,9 +234,39 @@ public class CmmnTaskServiceTest extends FlowableCmmnTestCase {
             assertThat(taskFromQuery.getScopeId(), nullValue());
             assertThat(taskFromQuery.getScopeType(), nullValue());
         } finally {
-            cmmnTaskService.deleteTask(task.getId());
-            cmmnHistoryService.deleteHistoricTaskInstance(task.getId());
+            cmmnTaskService.deleteTask(task.getId(), true);
         }
+    }
+
+    @Test
+    @CmmnDeployment
+    public void testEntityLinkCreation() {
+        CaseInstance caseInstance = cmmnRuntimeService.createCaseInstanceBuilder().caseDefinitionKey("entityLinkCreation").start();
+        Task task = cmmnTaskService.createTaskQuery().caseInstanceId(caseInstance.getId()).singleResult();
+        assertNotNull(task);
+
+        CommandExecutor commandExecutor = cmmnEngine.getCmmnEngineConfiguration().getCommandExecutor();
+
+        List<EntityLink> entityLinks = commandExecutor.execute(commandContext -> {
+            EntityLinkService entityLinkService = CommandContextUtil.getEntityLinkService(commandContext);
+
+            return entityLinkService.findEntityLinksByScopeIdAndType(caseInstance.getId(), ScopeTypes.CMMN, EntityLinkType.CHILD);
+        });
+
+        assertEquals(1, entityLinks.size());
+        assertEquals(HierarchyType.ROOT, entityLinks.get(0).getHierarchyType());
+
+        cmmnTaskService.complete(task.getId());
+        assertCaseInstanceEnded(caseInstance);
+
+        List<HistoricEntityLink> entityLinksByScopeIdAndType = commandExecutor.execute(commandContext -> {
+            HistoricEntityLinkService historicEntityLinkService = CommandContextUtil.getHistoricEntityLinkService(commandContext);
+
+            return historicEntityLinkService.findHistoricEntityLinksByScopeIdAndScopeType(caseInstance.getId(), ScopeTypes.CMMN, EntityLinkType.CHILD);
+        });
+
+        assertEquals(1, entityLinksByScopeIdAndType.size());
+        assertEquals(HierarchyType.ROOT, entityLinksByScopeIdAndType.get(0).getHierarchyType());
     }
 
     private static Set<IdentityLinkEntityImpl> getDefaultIdentityLinks() {

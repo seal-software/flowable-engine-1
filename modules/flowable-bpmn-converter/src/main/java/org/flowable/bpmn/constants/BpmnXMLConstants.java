@@ -163,6 +163,7 @@ public interface BpmnXMLConstants {
     public static final String ATTRIBUTE_EVENT_START_INITIATOR = "initiator";
     public static final String ATTRIBUTE_EVENT_START_INTERRUPTING = "isInterrupting";
     public static final String ATTRIBUTE_FORM_FORMKEY = "formKey";
+    public static final String ATTRIBUTE_FORM_FIELD_VALIDATION = "formFieldValidation";
 
     public static final String ELEMENT_MULTIINSTANCE = "multiInstanceLoopCharacteristics";
     public static final String ELEMENT_MULTIINSTANCE_CARDINALITY = "loopCardinality";
@@ -210,19 +211,26 @@ public interface BpmnXMLConstants {
     public static final String ATTRIBUTE_TASK_RULE_RULES = "rules";
     public static final String ATTRIBUTE_TASK_RULE_EXCLUDE = "exclude";
     public static final String ATTRIBUTE_TASK_RULE_CLASS = "class";
+    
+    public static final String ATTRIBUTE_BUSINESS_KEY = "businessKey";
+    public static final String ATTRIBUTE_INHERIT_BUSINESS_KEY = "inheritBusinessKey";
+    public static final String ATTRIBUTE_SAME_DEPLOYMENT = "sameDeployment";
+    public static final String ATTRIBUTE_FALLBACK_TO_DEFAULT_TENANT = "fallbackToDefaultTenant";
+    public static final String ELEMENT_IN_PARAMETERS = "in";
+    public static final String ELEMENT_OUT_PARAMETERS = "out";
 
     public static final String ATTRIBUTE_CALL_ACTIVITY_CALLEDELEMENT = "calledElement";
+    public static final String ATTRIBUTE_CALL_ACTIVITY_CALLEDELEMENTTYPE = "calledElementType";
     public static final String ATTRIBUTE_CALL_ACTIVITY_PROCESS_INSTANCE_NAME = "processInstanceName";
-    public static final String ATTRIBUTE_CALL_ACTIVITY_BUSINESS_KEY = "businessKey";
-    public static final String ATTRIBUTE_CALL_ACTIVITY_INHERIT_BUSINESS_KEY = "inheritBusinessKey";
     public static final String ATTRIBUTE_CALL_ACTIVITY_INHERITVARIABLES = "inheritVariables";
-    public static final String ATTRIBUTE_CALL_ACTIVITY_SAME_DEPLOYMENT = "sameDeployment";
     public static final String ATTRIBUTE_CALL_ACTIVITY_USE_LOCALSCOPE_FOR_OUTPARAMETERS = "useLocalScopeForOutParameters";
-    public static final String ELEMENT_CALL_ACTIVITY_IN_PARAMETERS = "in";
-    public static final String ELEMENT_CALL_ACTIVITY_OUT_PARAMETERS = "out";
+    public static final String ATTRIBUTE_CALL_ACTIVITY_COMPLETE_ASYNC = "completeAsync";
     public static final String ATTRIBUTE_IOPARAMETER_SOURCE = "source";
     public static final String ATTRIBUTE_IOPARAMETER_SOURCE_EXPRESSION = "sourceExpression";
     public static final String ATTRIBUTE_IOPARAMETER_TARGET = "target";
+    
+    public static final String ATTRIBUTE_CASE_TASK_CASE_DEFINITION_KEY = "caseDefinitionKey";
+    public static final String ATTRIBUTE_CASE_TASK_CASE_INSTANCE_NAME = "caseInstanceName";
 
     public static final String ELEMENT_SEQUENCE_FLOW = "sequenceFlow";
     public static final String ELEMENT_FLOW_CONDITION = "conditionExpression";
@@ -325,5 +333,6 @@ public interface BpmnXMLConstants {
     public static final String MAP_EXCEPTION = "mapException";
     public static final String MAP_EXCEPTION_ERRORCODE = "errorCode";
     public static final String MAP_EXCEPTION_ANDCHILDREN = "includeChildExceptions";
+    public static final String MAP_EXCEPTION_ROOTCAUSE = "rootCause";
 
 }

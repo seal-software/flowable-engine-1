@@ -49,7 +49,7 @@ import io.swagger.annotations.Authorization;
  */
 @RestController
 @Api(tags = { "History Task" }, description = "Manage History Task Instances", authorizations = { @Authorization(value = "basicAuth") })
-public class HistoricTaskInstanceVariableDataResource {
+public class HistoricTaskInstanceVariableDataResource extends HistoricTaskInstanceBaseResource {
 
     @Autowired
     protected CmmnRestResponseFactory restResponseFactory;
@@ -61,7 +61,7 @@ public class HistoricTaskInstanceVariableDataResource {
             notes = "The response body contains the binary value of the variable. When the variable is of type binary, the content-type of the response is set to application/octet-stream, regardless of the content of the variable or the request accept-type header. In case of serializable, application/x-java-serialized-object is used as content-type.")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Indicates the task instance was found and the requested variable data is returned."),
-            @ApiResponse(code = 404, message = "Indicates the requested task instance was not found or the process instance doesn’t have a variable with the given name or the variable doesn’t have a binary stream available. Status message provides additional information.") })
+            @ApiResponse(code = 404, message = "Indicates the requested task instance was not found or the process instance does not have a variable with the given name or the variable does not  have a binary stream available. Status message provides additional information.") })
     @GetMapping(value = "/cmmn-history/historic-task-instances/{taskId}/variables/{variableName}/data")
     @ResponseBody
     public byte[] getVariableData(@ApiParam(name = "taskId") @PathVariable("taskId") String taskId, @ApiParam(name = "variableName") @PathVariable("variableName") String variableName, @RequestParam(value = "scope", required = false) String scope,
@@ -111,6 +111,10 @@ public class HistoricTaskInstanceVariableDataResource {
 
         if (taskObject == null) {
             throw new FlowableObjectNotFoundException("Historic task instance '" + taskId + "' couldn't be found.", HistoricTaskInstanceEntity.class);
+        }
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.accessHistoryTaskInfoById(taskObject);
         }
 
         Object value = null;

@@ -18,6 +18,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.flowable.app.spring.SpringAppEngineConfiguration;
+import org.flowable.common.engine.impl.cfg.IdGenerator;
 import org.flowable.common.engine.impl.persistence.StrongUuidGenerator;
 import org.flowable.engine.configurator.ProcessEngineConfigurator;
 import org.flowable.engine.spring.configurator.SpringProcessEngineConfigurator;
@@ -68,7 +69,7 @@ import org.springframework.transaction.PlatformTransactionManager;
     FlowableIdmProperties.class
 })
 @AutoConfigureAfter({
-    FlowableTransactionAutoConfiguration.class,
+    FlowableJpaAutoConfiguration.class,
     AppEngineAutoConfiguration.class,
 })
 @AutoConfigureBefore({
@@ -134,7 +135,9 @@ public class ProcessEngineAutoConfiguration extends AbstractSpringEngineAutoConf
     @Bean
     @ConditionalOnMissingBean
     public SpringProcessEngineConfiguration springProcessEngineConfiguration(DataSource dataSource, PlatformTransactionManager platformTransactionManager,
-            @ProcessAsync ObjectProvider<AsyncExecutor> asyncExecutorProvider, 
+            @Process ObjectProvider<IdGenerator> processIdGenerator,
+            ObjectProvider<IdGenerator> globalIdGenerator,
+            @ProcessAsync ObjectProvider<AsyncExecutor> asyncExecutorProvider,
             @ProcessAsyncHistory ObjectProvider<AsyncExecutor> asyncHistoryExecutorProvider) throws IOException {
 
         SpringProcessEngineConfiguration conf = new SpringProcessEngineConfiguration();
@@ -176,6 +179,7 @@ public class ProcessEngineAutoConfiguration extends AbstractSpringEngineAutoConf
         conf.setMailServerUsername(mailProperties.getUsername());
         conf.setMailServerPassword(mailProperties.getPassword());
         conf.setMailServerDefaultFrom(mailProperties.getDefaultFrom());
+        conf.setMailServerForceTo(mailProperties.getForceTo());
         conf.setMailServerUseSSL(mailProperties.isUseSsl());
         conf.setMailServerUseTLS(mailProperties.isUseTls());
 
@@ -184,8 +188,18 @@ public class ProcessEngineAutoConfiguration extends AbstractSpringEngineAutoConf
         conf.setEnableSafeBpmnXml(processProperties.isEnableSafeXml());
 
         conf.setHistoryLevel(flowableProperties.getHistoryLevel());
+        
+        conf.setActivityFontName(flowableProperties.getActivityFontName());
+        conf.setAnnotationFontName(flowableProperties.getAnnotationFontName());
+        conf.setLabelFontName(flowableProperties.getLabelFontName());
 
-        conf.setIdGenerator(new StrongUuidGenerator());
+        conf.setFormFieldValidationEnabled(flowableProperties.isFormFieldValidationEnabled());
+
+        IdGenerator idGenerator = getIfAvailable(processIdGenerator, globalIdGenerator);
+        if (idGenerator == null) {
+            idGenerator = new StrongUuidGenerator();
+        }
+        conf.setIdGenerator(idGenerator);
 
         return conf;
     }

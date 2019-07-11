@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
-import org.flowable.common.engine.impl.AbstractQuery;
+import org.flowable.common.engine.impl.query.AbstractQuery;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.common.engine.impl.interceptor.CommandExecutor;
 import org.flowable.form.api.FormInstance;
@@ -54,6 +54,7 @@ public class FormInstanceQueryImpl extends AbstractQuery<FormInstanceQuery, Form
     protected String tenantId;
     protected String tenantIdLike;
     protected boolean withoutTenantId;
+    protected boolean withoutTaskId;
 
     public FormInstanceQueryImpl() {
     }
@@ -175,7 +176,7 @@ public class FormInstanceQueryImpl extends AbstractQuery<FormInstanceQuery, Form
     }
 
     @Override
-    public FormInstanceQueryImpl deploymentTenantId(String tenantId) {
+    public FormInstanceQueryImpl tenantId(String tenantId) {
         if (tenantId == null) {
             throw new FlowableIllegalArgumentException("deploymentTenantId is null");
         }
@@ -184,7 +185,7 @@ public class FormInstanceQueryImpl extends AbstractQuery<FormInstanceQuery, Form
     }
 
     @Override
-    public FormInstanceQueryImpl deploymentTenantIdLike(String tenantIdLike) {
+    public FormInstanceQueryImpl tenantIdLike(String tenantIdLike) {
         if (tenantIdLike == null) {
             throw new FlowableIllegalArgumentException("deploymentTenantIdLike is null");
         }
@@ -193,8 +194,14 @@ public class FormInstanceQueryImpl extends AbstractQuery<FormInstanceQuery, Form
     }
 
     @Override
-    public FormInstanceQueryImpl deploymentWithoutTenantId() {
+    public FormInstanceQueryImpl withoutTenantId() {
         this.withoutTenantId = true;
+        return this;
+    }
+
+    @Override
+    public FormInstanceQueryImpl withoutTaskId() {
+        this.withoutTaskId = true;
         return this;
     }
 
@@ -214,13 +221,11 @@ public class FormInstanceQueryImpl extends AbstractQuery<FormInstanceQuery, Form
 
     @Override
     public long executeCount(CommandContext commandContext) {
-        checkQueryOk();
         return CommandContextUtil.getFormInstanceEntityManager(commandContext).findFormInstanceCountByQueryCriteria(this);
     }
 
     @Override
     public List<FormInstance> executeList(CommandContext commandContext) {
-        checkQueryOk();
         return CommandContextUtil.getFormInstanceEntityManager(commandContext).findFormInstancesByQueryCriteria(this);
     }
 
@@ -308,5 +313,9 @@ public class FormInstanceQueryImpl extends AbstractQuery<FormInstanceQuery, Form
 
     public boolean isWithoutTenantId() {
         return withoutTenantId;
+    }
+
+    public boolean isWithoutTaskId() {
+        return withoutTaskId;
     }
 }

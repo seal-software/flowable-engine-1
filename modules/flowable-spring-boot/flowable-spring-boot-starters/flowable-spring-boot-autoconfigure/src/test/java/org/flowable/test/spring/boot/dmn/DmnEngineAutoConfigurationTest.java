@@ -39,7 +39,6 @@ import org.flowable.engine.ProcessEngine;
 import org.flowable.engine.ProcessEngineConfiguration;
 import org.flowable.engine.impl.util.EngineServiceUtil;
 import org.flowable.spring.SpringProcessEngineConfiguration;
-import org.flowable.spring.boot.FlowableTransactionAutoConfiguration;
 import org.flowable.spring.boot.ProcessEngineAutoConfiguration;
 import org.flowable.spring.boot.ProcessEngineServicesAutoConfiguration;
 import org.flowable.spring.boot.app.AppEngineAutoConfiguration;
@@ -51,7 +50,6 @@ import org.junit.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.ApplicationContext;
@@ -98,8 +96,6 @@ public class DmnEngineAutoConfigurationTest {
     @Test
     public void dmnEngineWithBasicDataSourceAndProcessEngine() {
         contextRunner.withConfiguration(AutoConfigurations.of(
-            HibernateJpaAutoConfiguration.class,
-            FlowableTransactionAutoConfiguration.class,
             ProcessEngineServicesAutoConfiguration.class,
             ProcessEngineAutoConfiguration.class
         )).run(context -> {
@@ -136,8 +132,6 @@ public class DmnEngineAutoConfigurationTest {
     @Test
     public void dmnEngineWithBasicDataSourceAndAppEngine() {
         contextRunner.withConfiguration(AutoConfigurations.of(
-            HibernateJpaAutoConfiguration.class,
-            FlowableTransactionAutoConfiguration.class,
             AppEngineServicesAutoConfiguration.class,
             AppEngineAutoConfiguration.class,
             ProcessEngineServicesAutoConfiguration.class,
@@ -239,9 +233,9 @@ public class DmnEngineAutoConfigurationTest {
         assertThat(appDefinition.getVersion()).isOne();
         
         List<AppDeployment> appDeployments = appRepositoryService.createDeploymentQuery().list();
-        assertThat(appDeployments).hasSize(2)
+        assertThat(appDeployments).hasSize(3)
             .extracting(AppDeployment::getName)
-            .containsExactlyInAnyOrder("simple.bar", "vacationRequest.zip");
+            .containsExactlyInAnyOrder("simple.bar", "vacationRequest.zip", "processTask.bar");
     }
 
     private static DmnEngineConfigurationApi dmnEngine(ProcessEngine processEngine) {

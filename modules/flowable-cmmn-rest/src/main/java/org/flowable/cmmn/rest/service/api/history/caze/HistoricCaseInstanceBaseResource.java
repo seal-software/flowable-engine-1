@@ -13,18 +13,26 @@
 
 package org.flowable.cmmn.rest.service.api.history.caze;
 
+import static org.flowable.common.rest.api.PaginateListUtil.paginateList;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.flowable.cmmn.api.CmmnHistoryService;
+import org.flowable.cmmn.api.CmmnRepositoryService;
+import org.flowable.cmmn.api.history.HistoricCaseInstance;
 import org.flowable.cmmn.api.history.HistoricCaseInstanceQuery;
+import org.flowable.cmmn.api.repository.CaseDefinition;
 import org.flowable.cmmn.engine.impl.history.HistoricCaseInstanceQueryProperty;
+import org.flowable.cmmn.rest.service.api.CmmnRestApiInterceptor;
 import org.flowable.cmmn.rest.service.api.CmmnRestResponseFactory;
 import org.flowable.cmmn.rest.service.api.engine.variable.QueryVariable;
 import org.flowable.cmmn.rest.service.api.engine.variable.QueryVariable.QueryVariableOperation;
 import org.flowable.common.engine.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 import org.flowable.common.engine.api.query.QueryProperty;
 import org.flowable.common.rest.api.DataResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +57,12 @@ public class HistoricCaseInstanceBaseResource {
 
     @Autowired
     protected CmmnHistoryService historyService;
+    
+    @Autowired
+    protected CmmnRepositoryService repositoryService;
+    
+    @Autowired(required=false)
+    protected CmmnRestApiInterceptor restApiInterceptor;
 
     protected DataResponse<HistoricCaseInstanceResponse> getQueryResponse(HistoricCaseInstanceQueryRequest queryRequest, Map<String, String> allRequestParams) {
         HistoricCaseInstanceQuery query = historyService.createHistoricCaseInstanceQuery();
@@ -101,8 +115,52 @@ public class HistoricCaseInstanceBaseResource {
         if (Boolean.TRUE.equals(queryRequest.getWithoutTenantId())) {
             query.caseInstanceWithoutTenantId();
         }
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.accessHistoryCaseInfoWithQuery(query, queryRequest);
+        }
 
-        return new HistoricCaseInstancePaginateList(restResponseFactory).paginateList(allRequestParams, queryRequest, query, "caseInstanceId", allowedSortProperties);
+        DataResponse<HistoricCaseInstanceResponse> responseList = paginateList(allRequestParams, queryRequest, query, "caseInstanceId", allowedSortProperties,
+            restResponseFactory::createHistoricCaseInstanceResponseList);
+        
+        Set<String> caseDefinitionIds = new HashSet<String>();
+        List<HistoricCaseInstanceResponse> caseInstanceList = responseList.getData();
+        for (HistoricCaseInstanceResponse caseInstanceResponse : caseInstanceList) {
+            if (!caseDefinitionIds.contains(caseInstanceResponse.getCaseDefinitionId())) {
+                caseDefinitionIds.add(caseInstanceResponse.getCaseDefinitionId());
+            }
+        }
+        
+        if (caseDefinitionIds.size() > 0) {
+            List<CaseDefinition> caseDefinitionList = repositoryService.createCaseDefinitionQuery().caseDefinitionIds(caseDefinitionIds).list();
+            Map<String, CaseDefinition> caseDefinitionMap = new HashMap<String, CaseDefinition>();
+            for (CaseDefinition caseDefinition : caseDefinitionList) {
+                caseDefinitionMap.put(caseDefinition.getId(), caseDefinition);
+            }
+            
+            for (HistoricCaseInstanceResponse caseInstanceResponse : caseInstanceList) {
+                if (caseDefinitionMap.containsKey(caseInstanceResponse.getCaseDefinitionId())) {
+                    CaseDefinition caseDefinition = caseDefinitionMap.get(caseInstanceResponse.getCaseDefinitionId());
+                    caseInstanceResponse.setCaseDefinitionName(caseDefinition.getName());
+                    caseInstanceResponse.setCaseDefinitionDescription(caseDefinition.getDescription());
+                }
+            }
+        }
+        
+        return responseList;
+    }
+    
+    protected HistoricCaseInstance getHistoricCaseInstanceFromRequest(String caseInstanceId) {
+        HistoricCaseInstance caseInstance = historyService.createHistoricCaseInstanceQuery().caseInstanceId(caseInstanceId).singleResult();
+        if (caseInstance == null) {
+            throw new FlowableObjectNotFoundException("Could not find a case instance with id '" + caseInstanceId + "'.", HistoricCaseInstance.class);
+        }
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.accessHistoryCaseInfoById(caseInstance);
+        }
+        
+        return caseInstance;
     }
 
     protected void addVariables(HistoricCaseInstanceQuery caseInstanceQuery, List<QueryVariable> variables) {

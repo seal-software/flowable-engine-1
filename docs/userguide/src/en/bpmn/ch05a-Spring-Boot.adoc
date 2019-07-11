@@ -15,9 +15,14 @@ The Spring Boot - Flowable integration has been developed together with Spring c
 Flowable supports both Spring Boot 2.0 and 1.5 with the same starters. The base support is for Spring Boot 2.0, which means that the actuator endpoints are only supported on 2.0.
 The Flowable starters are also puling spring boot starter transitively, which means that users will have to define the 1.5 version of the spring boot starters in their own build files.
 
+[[springSpringBootGettingStarted]]
 ==== Getting started
 
-Spring Boot is all about convention over configuration. To get started, simply add the _flowable-spring-boot-starter_ or _flowable-spring-boot-starter-rest_ dependency to your project.
+Spring Boot is all about convention over configuration.
+To get started, you would need to create a Spring Boot project.
+The easiest way to do this would be to create a project via link:$$https://start.spring.io/$$[start.spring.io].
+For example create a project with web and h2 dependencies.
+Then in the created project simply add the _flowable-spring-boot-starter_ or _flowable-spring-boot-starter-rest_ dependency.
 In case you don't need all the engines see the other <<springBootFlowableStarter, Flowable starters>>.
 For example for Maven:
 
@@ -31,7 +36,8 @@ For example for Maven:
 </dependency>
 ----
 
-That's all that's needed. This dependency will transitively add the correct Flowable and Spring dependencies to the classpath. You can now write the Spring Boot application:
+That's all that's needed. This dependency will transitively add the correct Flowable dependencies to the classpath.
+You can now run your Spring Boot application:
 
 [source,java,,linenums]
 ----
@@ -48,18 +54,8 @@ public class MyApplication {
 }
 ----
 
-Flowable needs a database to store its data. If you run the code above, it will give you an informative exception message that you need to add a database driver dependency to the classpath. For now, add the H2 database dependency:
 
-[source,xml,linenums]
-----
-<dependency>
-	<groupId>com.h2database</groupId>
-	<artifactId>h2</artifactId>
-	<version>1.4.197</version>
-</dependency>
-----
-
-The application can now be started. You will see output like this:
+You will see an output like this:
 
 ----
   .   ____          _            __ _ _
@@ -152,10 +148,12 @@ So, by just adding the dependency to the classpath and using the _@SpringBootApl
 
 Also:
 
-* Any BPMN 2.0 process definitions in the _processes_ folder will be automatically deployed. Create a folder _processes_ and add a dummy process definition (named _one-task-process.bpmn20.xml_) to this folder.
+* Any BPMN 2.0 process definitions in the _processes_ folder will be automatically deployed. Create a folder _processes_ and add a dummy process definition (named _one-task-process.bpmn20.xml_) to this folder. The content of this file is shown below.
 * Any CMMN 1.1 case definitions in the _cases_ folder will be automatically deployed.
 * Any DMN 1.1 dmn definitions in the _dmn_ folder will be automatically deployed.
 * Any Form definitions in the _forms_ folder will be automatically deployed.
+
+The XML content of the process definition is shown below. Notice that, for the moment, we are hard-coding an assignee called "kermit" to the user task. We'll come back to this later.
 
 [source,xml,linenums]
 ----
@@ -168,7 +166,7 @@ Also:
     <process id="oneTaskProcess" name="The One Task Process">
         <startEvent id="theStart" />
         <sequenceFlow id="flow1" sourceRef="theStart" targetRef="theTask" />
-        <userTask id="theTask" name="my task" />
+        <userTask id="theTask" name="my task" assignee="kermit" />
         <sequenceFlow id="flow2" sourceRef="theTask" targetRef="theEnd" />
         <endEvent id="theEnd" />
     </process>
@@ -357,6 +355,7 @@ curl http://localhost:8080/tasks?assignee=kermit
 [{"id":"10004","name":"my task"}]
 ----
 
+As can be seen, we are referring to the assignee, "kermit", which was hard-coded into the process definition XML earlier. We'll change this later on to allow the assignee to be set when the workflow instance is started.
 
 ==== JPA support
 
@@ -564,6 +563,8 @@ And finally, to try out the Spring-JPA-Flowable integration, we assign the task 
 <userTask id="theTask" name="my task" flowable:assignee="${person.id}"/>
 ----
 
+This replaces the hard-coded recipient, "kermit", which we had initially set.
+
 We can now start a new process instance, providing the user name in the POST body:
 
 ----
@@ -584,6 +585,8 @@ curl http://localhost:8080/tasks?assignee=1
 Flowable provides a Spring Boot Actuator Endpoint that exposes information for the Processes that are running.
 By default the `flowable` endpoint is mapped to `/actuator/flowable`.
 Spring Boot by default only exposes the `info` and `health` endpoints. In order to enable the `flowable` endpoint you need to add `management.endpoint.flowable.enabled=true` to your `application.properties`.
+
+In order to make enable Actuator endpoints you need to add a dependency on Actuator, e.g. by using {sc-flowable-starter}/flowable-spring-boot-starter-actuator/pom.xml[flowable-spring-boot-starter-actuator].
 
 `curl http://localhost:8080/actuator/flowable`
 
@@ -622,7 +625,7 @@ Flowable also provides a Spring Boot `InfoContributor` which looks like:
 ----
 {
   "flowable": {
-    "version": "6.3.1.0"
+    "version": "6.4.1"
   }
 }
 ----
@@ -755,6 +758,7 @@ flowable.idm.ldap.query.all-users= # The query that is executed when searching f
 flowable.idm.ldap.query.groups-for-user= # The query that is executed when searching for the groups of a specific user.
 flowable.idm.ldap.query.user-by-full-name-like= # The query that is executed when searching for a user by full name.
 flowable.idm.ldap.query.user-by-id= # The query that is executed when searching for a user by userId.
+flowable.idm.ldap.query.group-by-id= # The query that is executed when searching for a specific group by groupId.
 flowable.idm.ldap.search-time-limit=0 # The timeout (in milliseconds) that is used when doing a search in LDAP. By default set to '0', which means 'wait forever'.
 flowable.idm.ldap.security-authentication=simple # The value that is used for the 'java.naming.security.authentication' property used to connect to the LDAP system.
 flowable.idm.ldap.server= # The server host on which the LDAP system can be reached. For example 'ldap://localhost'.
@@ -763,6 +767,7 @@ flowable.idm.ldap.user-base-dn= # The base 'distinguished name' (DN) from which 
 
 # Flowable Mail {sc-flowable-boot}/FlowableMailProperties.java[FlowableMailProperties]
 flowable.mail.server.default-from=flowable@localhost # The default from address that needs to be used when sending emails.
+flowable.mail.server.force-to= # The force to address(es) that would be used when sending out emails. IMPORTANT: If this is set then all emails will be send to defined address(es) instead of the address configured in the MailActivity.
 flowable.mail.server.host=localhost # The host of the mail server.
 flowable.mail.server.password= # The password for the mail server authentication.
 flowable.mail.server.port=1025 # The port of the mail server.
@@ -947,7 +952,7 @@ You can provide a custom implementation of a Flowable Service by using this. See
 
 ===== Combining starters
 
-In case you need only a combination of the engines then you can add only the required depdenencies.
+In case you need only a combination of the engines then you can add only the required dependencies.
 For example to use the Process, CMMN, Form and IDM engine and use LDAP you need to add the following dependencies:
 
 [source,xml,linenums]
@@ -965,6 +970,11 @@ For example to use the Process, CMMN, Form and IDM engine and use LDAP you need 
 <dependency>
     <groupId>org.flowable</groupId>
     <artifactId>flowable-content-spring-configurator</artifactId>
+    <version>${flowable.version}</version>
+</dependency>
+<dependency>
+    <groupId>org.flowable</groupId>
+    <artifactId>flowable-form-spring-configurator</artifactId>
     <version>${flowable.version}</version>
 </dependency>
 <dependency>
@@ -1007,7 +1017,7 @@ public class MyConfiguration {
 
 [IMPORTANT]
 ======
-If you define a custom `TaskExecutor` bean the Flowable creation of the bean is not trigerred.
+If you define a custom `TaskExecutor` bean the Flowable creation of the bean is not triggered.
 Which means that if you define a bean qualified with `@Process` you have to define one with `@Cmmn` or `@Primary`, otherwise the Cmmn Async Executor will use the one for the Process
 ======
 

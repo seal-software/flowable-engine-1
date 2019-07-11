@@ -45,7 +45,11 @@ angular.module('flowableModeler')
 
             var hotReadOnlyDecisionTableEditorInstance;
             var hitPolicies = ['FIRST', 'ANY', 'UNIQUE', 'PRIORITY', 'RULE ORDER', 'OUTPUT ORDER', 'COLLECT'];
+            //added by seal
             var operators = ['==', '!=', '<', '>', '>=', '<=', 'IN', 'NOT IN', 'ANY', 'NOT ANY','CONTAINS', 'NOT CONTAINS', 'CONTAINS ANY', 'NOT CONTAINS ANY'];
+
+            var operators = ['==', '!=', '<', '>', '>=', '<=', 'ANY OF', 'NONE OF', 'ALL OF', 'NOT ALL OF', 'IS IN', 'IS NOT IN'];
+
             var columnIdCounter = 0;
             var dateFormat = 'YYYY-MM-DD';
 
@@ -440,8 +444,8 @@ angular.module('flowableModeler')
                 return newOutputExpression;
             };
 
-            var _loadDecisionTableDefinition = function (modelId) {
-                DecisionTableService.fetchDecisionTableDetails(modelId).then(function (decisionTable) {
+            var _loadDecisionTableDefinition = function (modelId, historyId) {
+                DecisionTableService.fetchDecisionTableDetails(modelId, historyId).then(function (decisionTable) {
 
                     $rootScope.currentDecisionTable = decisionTable.decisionTableDefinition;
                     $rootScope.currentDecisionTable.id = decisionTable.id;
@@ -724,7 +728,7 @@ angular.module('flowableModeler')
             };
 
             // fetch table from service and populate model
-            _loadDecisionTableDefinition($routeParams.modelId);
+            _loadDecisionTableDefinition($routeParams.modelId, $routeParams.modelHistoryId);
 
             var _generateColumnId = function () {
                 columnIdCounter++;

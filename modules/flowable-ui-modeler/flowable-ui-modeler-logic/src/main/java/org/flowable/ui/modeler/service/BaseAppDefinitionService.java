@@ -12,6 +12,10 @@
  */
 package org.flowable.ui.modeler.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -24,7 +28,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.converter.BpmnXMLConverter;
 import org.flowable.bpmn.model.BpmnModel;
@@ -49,10 +52,6 @@ import org.flowable.ui.modeler.domain.Model;
 import org.flowable.ui.modeler.repository.ModelRepository;
 import org.flowable.ui.modeler.serviceapi.ModelService;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * @author Yvo Swillens
@@ -246,13 +245,9 @@ public class BaseAppDefinitionService {
     }
 
     protected byte[] createDeployZipArtifact(Map<String, byte[]> deployableAssets) {
-        ByteArrayOutputStream baos = null;
-        ZipOutputStream zos = null;
-        byte[] deployZipArtifact = null;
-        try {
-            baos = new ByteArrayOutputStream();
-            zos = new ZipOutputStream(baos);
 
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ZipOutputStream zos = new ZipOutputStream(baos)) {
             for (Map.Entry<String, byte[]> entry : deployableAssets.entrySet()) {
                 ZipEntry zipEntry = new ZipEntry(entry.getKey());
                 zipEntry.setSize(entry.getValue().length);
@@ -261,17 +256,11 @@ public class BaseAppDefinitionService {
                 zos.closeEntry();
             }
 
-            IOUtils.closeQuietly(zos);
-
             // this is the zip file as byte[]
-            deployZipArtifact = baos.toByteArray();
-
-            IOUtils.closeQuietly(baos);
+            return baos.toByteArray();
 
         } catch (IOException ioe) {
             throw new InternalServerErrorException("Could not create deploy zip artifact");
         }
-
-        return deployZipArtifact;
     }
 }

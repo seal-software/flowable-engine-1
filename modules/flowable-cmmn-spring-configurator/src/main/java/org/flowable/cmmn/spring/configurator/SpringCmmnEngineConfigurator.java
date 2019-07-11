@@ -53,17 +53,14 @@ public class SpringCmmnEngineConfigurator extends CmmnEngineConfigurator {
         }
         
         if (springProcessEngineConfiguration != null) {
-            initProcessInstanceService(springProcessEngineConfiguration);
-            initProcessInstanceStateChangedCallbacks(springProcessEngineConfiguration);
-    
-            cmmnEngineConfiguration.setEnableTaskRelationshipCounts(springProcessEngineConfiguration.getPerformanceSettings().isEnableTaskRelationshipCounts());
-            cmmnEngineConfiguration.setTaskQueryLimit(springProcessEngineConfiguration.getTaskQueryLimit());
-            cmmnEngineConfiguration.setHistoricTaskQueryLimit(springProcessEngineConfiguration.getHistoricTaskQueryLimit());
+           copyProcessEngineProperties(springProcessEngineConfiguration);
         }
 
         ((SpringCmmnEngineConfiguration) cmmnEngineConfiguration).setTransactionManager(springEngineConfiguration.getTransactionManager());
-        cmmnEngineConfiguration.setExpressionManager(new SpringCmmnExpressionManager(
-                        springEngineConfiguration.getApplicationContext(), springEngineConfiguration.getBeans()));
+        if (cmmnEngineConfiguration.getExpressionManager() == null) {
+            cmmnEngineConfiguration.setExpressionManager(new SpringCmmnExpressionManager(
+                springEngineConfiguration.getApplicationContext(), springEngineConfiguration.getBeans()));
+        }
 
         initCmmnEngine();
 

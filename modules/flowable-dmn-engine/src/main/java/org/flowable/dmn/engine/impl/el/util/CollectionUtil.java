@@ -13,6 +13,7 @@
 package org.flowable.dmn.engine.impl.el.util;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
+
 import org.springframework.util.CollectionUtils;
 
 import java.util.Arrays;
@@ -23,7 +24,13 @@ import java.util.Collection;
  */
 public class CollectionUtil {
 
-    public static boolean contains(Object collection, Object value) {
+    /**
+     * all values of value must be in collection
+     *
+     * @return {@code true} if all elements of value are within the collection,
+     * {@code false} if at least one element of value is not within the collection
+     */
+    public static boolean allOf(Object collection, Object value) {
 
         if (collection == null) {
             throw new IllegalArgumentException("collection cannot be null");
@@ -51,7 +58,96 @@ public class CollectionUtil {
         }
     }
 
+    @Deprecated
+    public static boolean contains(Object collection, Object value) {
+        return allOf(collection, value);
+    }
+
+    /**
+     * none of the values of value must be in collection
+     *
+     * @return {@code true} if all elements of value are not within the collection,
+     * {@code false} if at least one element of value is within the collection
+     */
+    public static boolean noneOf(Object collection, Object value) {
+
+        if (collection == null) {
+            throw new IllegalArgumentException("collection cannot be null");
+        }
+
+        if (value == null) {
+            throw new IllegalArgumentException("value cannot be null");
+        }
+
+        // collection to check against
+        Collection targetCollection = getTargetCollection(collection, value);
+
+        // elements to check
+        if (DMNParseUtil.isParseableCollection(value)) {
+            Collection valueCollection = DMNParseUtil.parseCollection(value, targetCollection);
+            return !CollectionUtils.containsAny(targetCollection, valueCollection);
+        } else if (DMNParseUtil.isJavaCollection(value)) {
+            return !CollectionUtils.containsAny(targetCollection, (Collection) value);
+        } else if (DMNParseUtil.isArrayNode(value)) {
+            Collection valueCollection = DMNParseUtil.getCollectionFromArrayNode((ArrayNode) value);
+            return !CollectionUtils.containsAny(targetCollection, valueCollection);
+        } else {
+            Object formattedValue = DMNParseUtil.getFormattedValue(value, targetCollection);
+            return !targetCollection.contains(formattedValue);
+        }
+    }
+
+    @Deprecated
     public static boolean notContains(Object collection, Object value) {
+        return noneOf(collection, value);
+    }
+
+    /**
+     * one of the values of value must be in collection
+     *
+     * @return {@code true} if at least one element of value is within the collection,
+     * {@code false} if all elements of value are not within the collection
+     */
+    public static boolean anyOf(Object collection, Object value) {
+
+        if (collection == null) {
+            throw new IllegalArgumentException("collection cannot be null");
+        }
+
+        if (value == null) {
+            throw new IllegalArgumentException("value cannot be null");
+        }
+
+        // collection to check against
+        Collection targetCollection = getTargetCollection(collection, value);
+
+        // elements to check
+        if (DMNParseUtil.isParseableCollection(value)) {
+            Collection valueCollection = DMNParseUtil.parseCollection(value, targetCollection);
+            return valueCollection != null && CollectionUtils.containsAny(targetCollection, valueCollection);
+        } else if (DMNParseUtil.isJavaCollection(value)) {
+            return CollectionUtils.containsAny(targetCollection, (Collection) value);
+        } else if (DMNParseUtil.isArrayNode(value)) {
+            Collection valueCollection = DMNParseUtil.getCollectionFromArrayNode((ArrayNode) value);
+            return valueCollection != null && CollectionUtils.containsAny(targetCollection, valueCollection);
+        } else {
+            Object formattedValue = DMNParseUtil.getFormattedValue(value, targetCollection);
+            return targetCollection.contains(formattedValue);
+        }
+    }
+
+    @Deprecated
+    public static boolean containsAny(Object collection, Object value) {
+        return anyOf(collection, value);
+    }
+
+    /**
+     * one of the values of value must not be in collection
+     *
+     * @return {@code true} if a least one element of value is not within the collection,
+     * {@code false} if all elements of value are within the collection
+     */
+    public static boolean notAllOf(Object collection, Object value) {
 
         if (collection == null) {
             throw new IllegalArgumentException("collection cannot be null");
@@ -78,62 +174,6 @@ public class CollectionUtil {
             return !targetCollection.contains(formattedValue);
         }
     }
-
-    public static boolean containsAny(Object collection, Object value) {
-
-        if (collection == null) {
-            throw new IllegalArgumentException("collection cannot be null");
-        }
-
-        if (value == null) {
-            throw new IllegalArgumentException("value cannot be null");
-        }
-
-        // collection to check against
-        Collection targetCollection = getTargetCollection(collection, value);
-
-        // elements to check
-        if (DMNParseUtil.isParseableCollection(value)) {
-            Collection valueCollection = DMNParseUtil.parseCollection(value, targetCollection);
-            return valueCollection != null && CollectionUtils.containsAny(targetCollection, valueCollection);
-        } else if (DMNParseUtil.isJavaCollection(value)) {
-            return CollectionUtils.containsAny(targetCollection, (Collection) value);
-        } else if (DMNParseUtil.isArrayNode(value)) {
-            Collection valueCollection = DMNParseUtil.getCollectionFromArrayNode((ArrayNode) value);
-            return valueCollection != null && CollectionUtils.containsAny(targetCollection, valueCollection);
-        } else {
-            Object formattedValue = DMNParseUtil.getFormattedValue(value,targetCollection);
-            return targetCollection.contains(formattedValue);
-        }
-    }
-
-    public static boolean notContainsAny(Object collection, Object value) {
-
-        if (collection == null) {
-            throw new IllegalArgumentException("collection cannot be null");
-        }
-
-        if (value == null) {
-            throw new IllegalArgumentException("value cannot be null");
-        }
-
-        // collection to check against
-        Collection targetCollection = getTargetCollection(collection, value);
-
-        // elements to check
-        if (DMNParseUtil.isParseableCollection(value)) {
-            Collection valueCollection = DMNParseUtil.parseCollection(value, targetCollection);
-            return valueCollection == null || !CollectionUtils.containsAny(targetCollection, valueCollection);
-        } else if (DMNParseUtil.isJavaCollection(value)) {
-            return !CollectionUtils.containsAny(targetCollection, (Collection) value);
-        } else if (DMNParseUtil.isArrayNode(value)) {
-            Collection valueCollection = DMNParseUtil.getCollectionFromArrayNode((ArrayNode) value);
-            return valueCollection == null || !CollectionUtils.containsAny(targetCollection, valueCollection);
-        } else {
-            Object formattedValue = DMNParseUtil.getFormattedValue(value, targetCollection);
-            return !targetCollection.contains(formattedValue);
-        }
-    }
     public static boolean in(Object collection, Object value) {
     	
     		return contains(value, collection);
@@ -151,6 +191,11 @@ public class CollectionUtil {
 
     		return notContainsAny(value, collection);
     	
+    }
+
+    @Deprecated
+    public static boolean notContainsAny(Object collection, Object value) {
+        return notAllOf(collection, value);
     }
 
     protected static Collection getTargetCollection(Object collection, Object value) {

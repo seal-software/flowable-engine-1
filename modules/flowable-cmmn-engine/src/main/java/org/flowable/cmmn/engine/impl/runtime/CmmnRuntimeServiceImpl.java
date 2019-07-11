@@ -20,20 +20,27 @@ import org.flowable.cmmn.api.CmmnRuntimeService;
 import org.flowable.cmmn.api.runtime.CaseInstance;
 import org.flowable.cmmn.api.runtime.CaseInstanceBuilder;
 import org.flowable.cmmn.api.runtime.CaseInstanceQuery;
+import org.flowable.cmmn.api.runtime.ChangePlanItemStateBuilder;
+import org.flowable.cmmn.api.runtime.GenericEventListenerInstanceQuery;
 import org.flowable.cmmn.api.runtime.MilestoneInstanceQuery;
 import org.flowable.cmmn.api.runtime.PlanItemInstanceQuery;
+import org.flowable.cmmn.api.runtime.PlanItemInstanceTransitionBuilder;
 import org.flowable.cmmn.api.runtime.UserEventListenerInstanceQuery;
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.engine.impl.cmd.AddIdentityLinkForCaseInstanceCmd;
+import org.flowable.cmmn.engine.impl.cmd.ChangePlanItemStateCmd;
 import org.flowable.cmmn.engine.impl.cmd.CompleteCaseInstanceCmd;
 import org.flowable.cmmn.engine.impl.cmd.CompleteStagePlanItemInstanceCmd;
 import org.flowable.cmmn.engine.impl.cmd.DeleteIdentityLinkForCaseInstanceCmd;
 import org.flowable.cmmn.engine.impl.cmd.DisablePlanItemInstanceCmd;
 import org.flowable.cmmn.engine.impl.cmd.EnablePlanItemInstanceCmd;
 import org.flowable.cmmn.engine.impl.cmd.EvaluateCriteriaCmd;
+import org.flowable.cmmn.engine.impl.cmd.GetEntityLinkChildrenForCaseInstanceCmd;
+import org.flowable.cmmn.engine.impl.cmd.GetEntityLinkParentsForCaseInstanceCmd;
 import org.flowable.cmmn.engine.impl.cmd.GetIdentityLinksForCaseInstanceCmd;
 import org.flowable.cmmn.engine.impl.cmd.GetLocalVariableCmd;
 import org.flowable.cmmn.engine.impl.cmd.GetLocalVariablesCmd;
+import org.flowable.cmmn.engine.impl.cmd.GetStartFormModelCmd;
 import org.flowable.cmmn.engine.impl.cmd.GetVariableCmd;
 import org.flowable.cmmn.engine.impl.cmd.GetVariablesCmd;
 import org.flowable.cmmn.engine.impl.cmd.HasCaseInstanceVariableCmd;
@@ -41,16 +48,20 @@ import org.flowable.cmmn.engine.impl.cmd.RemoveLocalVariableCmd;
 import org.flowable.cmmn.engine.impl.cmd.RemoveLocalVariablesCmd;
 import org.flowable.cmmn.engine.impl.cmd.RemoveVariableCmd;
 import org.flowable.cmmn.engine.impl.cmd.RemoveVariablesCmd;
+import org.flowable.cmmn.engine.impl.cmd.SetCaseInstanceNameCmd;
 import org.flowable.cmmn.engine.impl.cmd.SetLocalVariableCmd;
 import org.flowable.cmmn.engine.impl.cmd.SetLocalVariablesCmd;
 import org.flowable.cmmn.engine.impl.cmd.SetVariableCmd;
 import org.flowable.cmmn.engine.impl.cmd.SetVariablesCmd;
+import org.flowable.cmmn.engine.impl.cmd.StartCaseInstanceAsyncCmd;
 import org.flowable.cmmn.engine.impl.cmd.StartCaseInstanceCmd;
-import org.flowable.cmmn.engine.impl.cmd.StartCaseInstanceWithFormCmd;
 import org.flowable.cmmn.engine.impl.cmd.StartPlanItemInstanceCmd;
 import org.flowable.cmmn.engine.impl.cmd.TerminateCaseInstanceCmd;
+import org.flowable.cmmn.engine.impl.cmd.TerminatePlanItemInstanceCmd;
 import org.flowable.cmmn.engine.impl.cmd.TriggerPlanItemInstanceCmd;
 import org.flowable.common.engine.impl.service.CommonEngineServiceImpl;
+import org.flowable.entitylink.api.EntityLink;
+import org.flowable.form.api.FormInfo;
 import org.flowable.identitylink.api.IdentityLink;
 
 /**
@@ -67,15 +78,26 @@ public class CmmnRuntimeServiceImpl extends CommonEngineServiceImpl<CmmnEngineCo
         return new CaseInstanceBuilderImpl(this);
     }
 
+    @Override
+    public PlanItemInstanceTransitionBuilder createPlanItemInstanceTransitionBuilder(String planItemInstanceId) {
+        return new PlanItemInstanceTransitionBuilderImpl(commandExecutor, planItemInstanceId);
+    }
+
     public CaseInstance startCaseInstance(CaseInstanceBuilder caseInstanceBuilder) {
         return commandExecutor.execute(new StartCaseInstanceCmd(caseInstanceBuilder));
     }
     
-    public CaseInstance startCaseInstanceWithForm(CaseInstanceBuilder caseInstanceBuilder) {
-        return commandExecutor.execute(new StartCaseInstanceWithFormCmd(caseInstanceBuilder));
+    public CaseInstance startCaseInstanceAsync(CaseInstanceBuilder caseInstanceBuilder) {
+        return commandExecutor.execute(new StartCaseInstanceAsyncCmd(caseInstanceBuilder));
     }
 
-    @Override public void triggerPlanItemInstance(String planItemInstanceId) {
+    @Override
+    public FormInfo getStartFormModel(String caseDefinitionId, String caseInstanceId) {
+        return commandExecutor.execute(new GetStartFormModelCmd(caseDefinitionId, caseInstanceId));
+    }
+
+    @Override 
+    public void triggerPlanItemInstance(String planItemInstanceId) {
         commandExecutor.execute(new TriggerPlanItemInstanceCmd(planItemInstanceId));
     }
     
@@ -93,7 +115,12 @@ public class CmmnRuntimeServiceImpl extends CommonEngineServiceImpl<CmmnEngineCo
     public void completeStagePlanItemInstance(String planItemInstanceId) {
         commandExecutor.execute(new CompleteStagePlanItemInstanceCmd(planItemInstanceId));
     }
-    
+
+    @Override
+    public void completeStagePlanItemInstance(String planItemInstanceId, boolean force) {
+        commandExecutor.execute(new CompleteStagePlanItemInstanceCmd(planItemInstanceId, true));
+    }
+
     @Override
     public void startPlanItemInstance(String planItemInstanceId) {
         commandExecutor.execute(new StartPlanItemInstanceCmd(planItemInstanceId));
@@ -108,10 +135,20 @@ public class CmmnRuntimeServiceImpl extends CommonEngineServiceImpl<CmmnEngineCo
     public void terminateCaseInstance(String caseInstanceId) {
         commandExecutor.execute(new TerminateCaseInstanceCmd(caseInstanceId));
     }
-    
+
+    @Override
+    public void terminatePlanItemInstance(String planItemInstanceId) {
+        commandExecutor.execute(new TerminatePlanItemInstanceCmd(planItemInstanceId));
+    }
+
     @Override
     public void evaluateCriteria(String caseInstanceId) {
         commandExecutor.execute(new EvaluateCriteriaCmd(caseInstanceId));
+    }
+    
+    @Override
+    public void completeGenericEventListenerInstance(String genericEventListenerInstanceId) {
+        commandExecutor.execute(new TriggerPlanItemInstanceCmd(genericEventListenerInstanceId));
     }
 
     @Override
@@ -185,6 +222,11 @@ public class CmmnRuntimeServiceImpl extends CommonEngineServiceImpl<CmmnEngineCo
     }
 
     @Override
+    public void setCaseInstanceName(String caseInstanceId, String caseName) {
+        commandExecutor.execute(new SetCaseInstanceNameCmd(caseInstanceId, caseName));
+    }
+
+    @Override
     public CaseInstanceQuery createCaseInstanceQuery() {
         return configuration.getCaseInstanceEntityManager().createCaseInstanceQuery();
     }
@@ -197,6 +239,11 @@ public class CmmnRuntimeServiceImpl extends CommonEngineServiceImpl<CmmnEngineCo
     @Override
     public MilestoneInstanceQuery createMilestoneInstanceQuery() {
         return configuration.getMilestoneInstanceEntityManager().createMilestoneInstanceQuery();
+    }
+    
+    @Override
+    public GenericEventListenerInstanceQuery createGenericEventListenerInstanceQuery() {
+        return new GenericEventListenerInstanceQueryImpl(configuration.getCommandExecutor());
     }
 
     @Override
@@ -228,5 +275,23 @@ public class CmmnRuntimeServiceImpl extends CommonEngineServiceImpl<CmmnEngineCo
     public List<IdentityLink> getIdentityLinksForCaseInstance(String caseInstanceId) {
         return commandExecutor.execute(new GetIdentityLinksForCaseInstanceCmd(caseInstanceId));
     }
+    
+    @Override
+    public List<EntityLink> getEntityLinkChildrenForCaseInstance(String caseInstanceId) {
+        return commandExecutor.execute(new GetEntityLinkChildrenForCaseInstanceCmd(caseInstanceId));
+    }
 
+    @Override
+    public List<EntityLink> getEntityLinkParentsForCaseInstance(String caseInstanceId) {
+        return commandExecutor.execute(new GetEntityLinkParentsForCaseInstanceCmd(caseInstanceId));
+    }
+
+    @Override
+    public ChangePlanItemStateBuilder createChangePlanItemStateBuilder() {
+        return new ChangePlanItemStateBuilderImpl(this);
+    }
+
+    public void changePlanItemState(ChangePlanItemStateBuilderImpl changePlanItemStateBuilder) {
+        commandExecutor.execute(new ChangePlanItemStateCmd(changePlanItemStateBuilder));
+    }
 }

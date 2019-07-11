@@ -16,52 +16,63 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.flowable.cmmn.api.runtime.CaseInstance;
+import org.apache.commons.lang3.StringUtils;
+import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
-import org.flowable.cmmn.engine.impl.util.IdentityLinkUtil;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.scope.ScopeTypes;
+import org.flowable.common.engine.api.variable.VariableContainer;
+import org.flowable.common.engine.impl.el.ExpressionManager;
 import org.flowable.common.engine.impl.history.HistoryLevel;
+import org.flowable.common.engine.impl.identity.Authentication;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
-import org.flowable.identitylink.api.IdentityLinkType;
 import org.flowable.task.api.Task;
 import org.flowable.task.api.history.HistoricTaskInstance;
+import org.flowable.task.api.history.HistoricTaskLogEntryType;
 import org.flowable.task.service.HistoricTaskService;
 import org.flowable.task.service.TaskService;
+import org.flowable.task.service.TaskServiceConfiguration;
+import org.flowable.task.service.delegate.TaskListener;
+import org.flowable.task.service.impl.BaseHistoricTaskLogEntryBuilderImpl;
 import org.flowable.task.service.impl.persistence.CountingTaskEntity;
 import org.flowable.task.service.impl.persistence.entity.HistoricTaskInstanceEntity;
 import org.flowable.task.service.impl.persistence.entity.TaskEntity;
 import org.flowable.variable.service.impl.persistence.entity.VariableByteArrayRef;
 import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEntity;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 /**
  * @author Joram Barrez
  */
 public class TaskHelper {
-    
+
     public static void insertTask(TaskEntity taskEntity, boolean fireCreateEvent) {
         if (taskEntity.getOwner() != null) {
-            addOwnerIdentityLink(taskEntity, taskEntity.getOwner());
+            addOwnerIdentityLink(taskEntity);
         }
         if (taskEntity.getAssignee() != null) {
             addAssigneeIdentityLinks(taskEntity);
+            CommandContextUtil.getCmmnEngineConfiguration().getListenerNotificationHelper().executeTaskListeners(taskEntity, TaskListener.EVENTNAME_ASSIGNMENT);
         }
-        
+
         CommandContextUtil.getTaskService().insertTask(taskEntity, fireCreateEvent);
         CommandContextUtil.getCmmnHistoryManager().recordTaskCreated(taskEntity);
     }
-    
+
     public static void deleteTask(String taskId, String deleteReason, boolean cascade) {
         TaskEntity task = CommandContextUtil.getTaskService().getTask(taskId);
         if (task != null) {
             if (task.getScopeId() != null && ScopeTypes.CMMN.equals(task.getScopeType())) {
                 throw new FlowableException("The task cannot be deleted because is part of a running case instance");
+            } else if (task.getExecutionId() != null) {
+                throw new FlowableException("The task cannot be deleted because is part of a running process instance");
             }
             deleteTask(task, deleteReason, cascade, true);
             
         } else if (cascade) {
+            deleteHistoricTaskLogEntries(taskId);
             deleteHistoricTask(taskId);
-
         }
     }
 
@@ -105,10 +116,13 @@ public class TaskHelper {
             
             if (cascade) {
                 deleteHistoricTask(task.getId());
+                deleteHistoricTaskLogEntries(task.getId());
             } else {
-                CommandContextUtil.getCmmnHistoryManager(commandContext).recordTaskEnd(task, deleteReason);
+                CommandContextUtil.getCmmnHistoryManager(commandContext)
+                    .recordTaskEnd(task, deleteReason, commandContext.getCurrentEngineConfiguration().getClock().getCurrentTime());
             }
-            
+
+            CommandContextUtil.getCmmnEngineConfiguration(commandContext).getListenerNotificationHelper().executeTaskListeners(task, TaskListener.EVENTNAME_DELETE);
             CommandContextUtil.getTaskService().deleteTask(task, fireEvents);
         }
     }
@@ -118,6 +132,7 @@ public class TaskHelper {
                 || (taskEntity.getAssignee() == null && assignee != null)) {
             
             CommandContextUtil.getTaskService().changeTaskAssignee(taskEntity, assignee);
+            CommandContextUtil.getCmmnEngineConfiguration().getListenerNotificationHelper().executeTaskListeners(taskEntity, TaskListener.EVENTNAME_ASSIGNMENT);
 
             if (taskEntity.getId() != null) {
                 addAssigneeIdentityLinks(taskEntity);
@@ -128,33 +143,23 @@ public class TaskHelper {
     public static void changeTaskOwner(TaskEntity taskEntity, String owner) {
         if ((taskEntity.getOwner() != null && !taskEntity.getOwner().equals(owner))
                 || (taskEntity.getOwner() == null && owner != null)) {
-            
+
             CommandContextUtil.getTaskService().changeTaskOwner(taskEntity, owner);
-            
+
             if (taskEntity.getId() != null) {
-                addOwnerIdentityLink(taskEntity, taskEntity.getOwner());
+                addOwnerIdentityLink(taskEntity);
             }
         }
     }
     
     protected static void addAssigneeIdentityLinks(TaskEntity taskEntity) {
-        if (taskEntity.getAssignee() != null && taskEntity.getScopeId() != null && ScopeTypes.CMMN.equals(taskEntity.getScopeType())) {
-            CaseInstance caseInstance = CommandContextUtil.getCaseInstanceEntityManager().findById(taskEntity.getScopeId());
-            IdentityLinkUtil.createCaseInstanceIdentityLink(caseInstance, taskEntity.getAssignee(), null, IdentityLinkType.PARTICIPANT);
-        }
+        CommandContextUtil.getInternalTaskAssignmentManager().addUserIdentityLinkToParent(taskEntity, taskEntity.getAssignee());
     }
-    
-    protected static void addOwnerIdentityLink(TaskEntity taskEntity, String owner) {
-        if (owner == null && taskEntity.getOwner() == null) {
-            return;
-        }
 
-        if (owner != null && taskEntity.getScopeId() != null && ScopeTypes.CMMN.equals(taskEntity.getScopeType())) {
-            CaseInstance caseInstance = CommandContextUtil.getCaseInstanceEntityManager().findById(taskEntity.getScopeId());
-            IdentityLinkUtil.createCaseInstanceIdentityLink(caseInstance, owner, null, IdentityLinkType.PARTICIPANT);
-        }
+    protected static void addOwnerIdentityLink(TaskEntity taskEntity) {
+        CommandContextUtil.getInternalTaskAssignmentManager().addUserIdentityLinkToParent(taskEntity, taskEntity.getOwner());
     }
-    
+
     public static void deleteHistoricTask(String taskId) {
         if (CommandContextUtil.getCmmnEngineConfiguration().getHistoryLevel() != HistoryLevel.NONE) {
             HistoricTaskService historicTaskService = CommandContextUtil.getHistoricTaskService();
@@ -164,6 +169,7 @@ public class TaskHelper {
                 List<HistoricTaskInstanceEntity> subTasks = historicTaskService.findHistoricTasksByParentTaskId(historicTaskInstance.getId());
                 for (HistoricTaskInstance subTask : subTasks) {
                     deleteHistoricTask(subTask.getId());
+                    deleteHistoricTaskLogEntries(subTask.getId());
                 }
     
                 CommandContextUtil.getHistoricVariableService().deleteHistoricVariableInstancesByTaskId(taskId);
@@ -173,5 +179,62 @@ public class TaskHelper {
             }
         }
     }
-    
+
+    public static void deleteHistoricTaskLogEntries(String taskId) {
+        if (CommandContextUtil.getTaskServiceConfiguration().isEnableHistoricTaskLogging()) {
+            CommandContextUtil.getHistoricTaskService().deleteHistoricTaskLogEntriesForTaskId(taskId);
+        }
+    }
+
+    public static void logUserTaskCompleted(TaskEntity taskEntity) {
+        TaskServiceConfiguration taskServiceConfiguration = CommandContextUtil.getTaskServiceConfiguration();
+        if (taskServiceConfiguration.isEnableHistoricTaskLogging()) {
+            BaseHistoricTaskLogEntryBuilderImpl taskLogEntryBuilder = new BaseHistoricTaskLogEntryBuilderImpl(taskEntity);
+            ObjectNode data = taskServiceConfiguration.getObjectMapper().createObjectNode();
+            taskLogEntryBuilder.timeStamp(taskServiceConfiguration.getClock().getCurrentTime());
+            taskLogEntryBuilder.userId(Authentication.getAuthenticatedUserId());
+            taskLogEntryBuilder.data(data.toString());
+            taskLogEntryBuilder.type(HistoricTaskLogEntryType.USER_TASK_COMPLETED.name());
+            taskServiceConfiguration.getInternalHistoryTaskManager().recordHistoryUserTaskLog(taskLogEntryBuilder);
+        }
+    }
+
+    public static boolean isFormFieldValidationEnabled(VariableContainer variableContainer,
+        CmmnEngineConfiguration cmmnEngineConfiguration, String formFieldValidationExpression) {
+        if (StringUtils.isNotEmpty(formFieldValidationExpression)) {
+            Boolean formFieldValidation = getBoolean(formFieldValidationExpression);
+            if (formFieldValidation != null) {
+                return formFieldValidation;
+            }
+
+            if (variableContainer != null) {
+                ExpressionManager expressionManager = cmmnEngineConfiguration.getExpressionManager();
+                Boolean formFieldValidationValue = getBoolean(
+                    expressionManager.createExpression(formFieldValidationExpression).getValue(variableContainer)
+                );
+                if (formFieldValidationValue == null) {
+                    throw new FlowableException("Unable to resolve formFieldValidationExpression to boolean value");
+                }
+                return formFieldValidationValue;
+            }
+            throw new FlowableException("Unable to resolve formFieldValidationExpression without variable container");
+        }
+        return true;
+    }
+
+    protected static Boolean getBoolean(Object booleanObject) {
+        if (booleanObject instanceof Boolean) {
+            return (Boolean) booleanObject;
+        }
+        if (booleanObject instanceof String) {
+            if ("true".equalsIgnoreCase((String) booleanObject)) {
+                return Boolean.TRUE;
+            }
+            if ("false".equalsIgnoreCase((String) booleanObject)) {
+                return Boolean.FALSE;
+            }
+        }
+        return null;
+    }
+
 }

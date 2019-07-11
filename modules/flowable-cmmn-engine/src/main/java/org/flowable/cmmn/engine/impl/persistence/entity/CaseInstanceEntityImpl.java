@@ -13,13 +13,16 @@
 package org.flowable.cmmn.engine.impl.persistence.entity;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
+import org.flowable.cmmn.engine.impl.repository.CaseDefinitionUtil;
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
+import org.flowable.cmmn.model.PlanItem;
 import org.flowable.common.engine.api.scope.ScopeTypes;
 import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEntity;
 import org.flowable.variable.service.impl.persistence.entity.VariableScopeImpl;
@@ -27,7 +30,7 @@ import org.flowable.variable.service.impl.persistence.entity.VariableScopeImpl;
 /**
  * @author Joram Barrez
  */
-public class CaseInstanceEntityImpl extends VariableScopeImpl implements CaseInstanceEntity {
+public class CaseInstanceEntityImpl extends AbstractCmmnEngineVariableScopeEntity implements CaseInstanceEntity {
 
     protected String businessKey;
     protected String name;
@@ -160,6 +163,15 @@ public class CaseInstanceEntityImpl extends VariableScopeImpl implements CaseIns
     }
     public void setLockTime(Date lockTime) {
         this.lockTime = lockTime;
+    }
+
+    @Override
+    public List<PlanItem> getPlanItems() {
+        if (caseDefinitionId != null) {
+            return CaseDefinitionUtil.getCase(caseDefinitionId).getPlanModel().getPlanItems();
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     @Override

@@ -27,8 +27,12 @@ import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.flowable.form.api.FormRepositoryService;
+import org.flowable.form.engine.FormEngineConfiguration;
+import org.flowable.form.spring.SpringFormEngineConfiguration;
+import org.flowable.form.spring.configurator.SpringFormEngineConfigurator;
+import org.flowable.idm.api.IdmEngineConfigurationApi;
 import org.flowable.idm.api.IdmIdentityService;
-import org.flowable.idm.engine.IdmEngineConfiguration;
 import org.flowable.spring.ProcessEngineFactoryBean;
 import org.flowable.spring.SpringProcessEngineConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -87,7 +91,25 @@ public class EngineConfiguration {
         processEngineConfiguration.setTransactionManager(annotationDrivenTransactionManager());
         processEngineConfiguration.setAsyncExecutorActivate(false);
         processEngineConfiguration.setHistoryLevel(HistoryLevel.FULL);
+        processEngineConfiguration.setEnableEntityLinks(true);
+        processEngineConfiguration.addConfigurator(formEngineConfigurator());
         return processEngineConfiguration;
+    }
+    
+    @Bean
+    public SpringFormEngineConfigurator formEngineConfigurator() {
+        SpringFormEngineConfigurator formEngineConfigurator =  new SpringFormEngineConfigurator();
+        formEngineConfigurator.setFormEngineConfiguration(formEngineConfiguration());
+        return formEngineConfigurator;
+    }
+    
+    @Bean(name = "formEngineConfiguration")
+    public FormEngineConfiguration formEngineConfiguration() {
+        SpringFormEngineConfiguration formEngineConfiguration = new SpringFormEngineConfiguration();
+        formEngineConfiguration.setDataSource(dataSource());
+        formEngineConfiguration.setDatabaseSchemaUpdate(FormEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);
+        formEngineConfiguration.setTransactionManager(annotationDrivenTransactionManager());
+        return formEngineConfiguration;
     }
 
     @Bean
@@ -122,7 +144,7 @@ public class EngineConfiguration {
     
     @Bean
     public IdmIdentityService idmIdentityService() {
-        return ((IdmEngineConfiguration) processEngine().getProcessEngineConfiguration().getEngineConfigurations()
+        return ((IdmEngineConfigurationApi) processEngine().getProcessEngineConfiguration().getEngineConfigurations()
                 .get(EngineConfigurationConstants.KEY_IDM_ENGINE_CONFIG)).getIdmIdentityService();
     }
 
@@ -134,5 +156,15 @@ public class EngineConfiguration {
     @Bean
     public DynamicBpmnService dynamicBpmnService() {
         return processEngine().getDynamicBpmnService();
+    }
+    
+    @Bean
+    public FormRepositoryService formRepositoryService(ProcessEngine processEngine) {
+        return formEngineConfiguration().getFormRepositoryService();
+    }
+    
+    @Bean
+    public org.flowable.form.api.FormService formEngineFormService(ProcessEngine processEngine) {
+        return formEngineConfiguration().getFormService();
     }
 }

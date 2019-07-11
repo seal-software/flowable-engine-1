@@ -12,6 +12,7 @@
             "CLEAR-FILTERS": "Clear filters",
             "CANCEL-AND-CLOSE": "Cancel and Close",
             "CANCEL": "Cancel",
+            "OK": "Ok",
             "NEXT": "Next",
             "PREVIOUS": "Previous",
             "CLOSE": "Close",
@@ -92,6 +93,12 @@
             },
             "SHOW-PROCESS-MODEL": {
                 "TITLE": "Process diagram"
+            },
+            "MIGRATE": {
+                "TITLE": "Migrate process instance",
+                "MESSAGE": "Migrate the process instance to another version of the process definition and define activity mappings.",
+                "CURRENT-DEFINITION": "Current process definition",
+                "TARGET-DEFINITION": "Target process definition"
             }
         }
     },
@@ -177,6 +184,7 @@
             "SHOW-ALL-JOBS": "Show all jobs",
             "SHOW-ALL-SUBPROCESSES": "Show all subprocesses",
             "SHOW-DIAGRAM": "Show process diagram",
+            "MIGRATE-PROCESSINSTANCE": "Migrate process instance",
             "TITLE-VARIABLES": "Actions on selected variable",
             "DELETE-VARIABLE": "Delete the variable",
             "UPDATE-VALUE": "Update variable",
@@ -307,7 +315,7 @@
                 "TITLE": "Assign task",
                 "MESSAGE": "Are you sure you want to assign task",
                 "NEW-ASSIGNEE": "New assignee",
-                "NEW-ASSIGNEE-HELP": "Leave the assignee field empty if you want to assign the task to nobody.",
+                "NEW-ASSIGNEE-HELP": "Leave the assignee field empty if you want to assign the task to nobody. Mind: when providing a user id make sure it exists.",
                 "CONFIRM": "Assign task"
             },
             "COMPLETE": {
@@ -656,7 +664,8 @@
             "CMMN-ENDPOINT": "CMMN API Endpoint configuration",
             "DMN-ENDPOINT": "DMN API Endpoint configuration",
             "FORM-ENDPOINT": "Form API Endpoint configuration",
-            "CONTENT-ENDPOINT": "Content API Endpoint configuration"
+            "CONTENT-ENDPOINT": "Content API Endpoint configuration",
+            "APP-ENDPOINT": "App API Endpoint configuration"
         },
         "POPUP": {
             "EDIT-ENDPOINT": {
@@ -800,12 +809,12 @@
             "TENANT": "Tenant"
         },
         "ACTION": {
-            "UPLOAD": "Upload process or package",
+            "UPLOAD": "Upload case or package",
             "DELETE": "Delete deployment"
         },
         "POPUP": {
             "UPLOAD": {
-                "DESCRIPTION": "Select a .bpmn, .bpmn20.xml process file to deploy or upload a package of processes (with assets) contained in .zip or .bar file.",
+                "DESCRIPTION": "Select a .cmmn, .cmmn.xml case file to deploy or upload a package of cases (with assets) contained in .zip or .bar file.",
                 "DROPZONE": "Or drop a file here",
                 "NO-DROP": "File drop is not supported by your browser",
                 "CANCEL-UPLOAD": "Cancel upload",
@@ -1158,7 +1167,20 @@
             "TENANT": "Tenant"
         },
         "ACTION": {
+            "UPLOAD": "Upload decision",
             "DELETE": "Delete deployment"
+        },
+        "POPUP": {
+            "UPLOAD": {
+                "DESCRIPTION": "Select a .dmn, .dmn.xml decision file to deploy to the DMN engine.",
+                "DROPZONE": "Or drop a file here",
+                "NO-DROP": "File drop is not supported by your browser",
+                "CANCEL-UPLOAD": "Cancel upload",
+                "ERROR": "Could not upload this file"
+            },
+            "DELETE": {
+                "CONFIRM-MESSAGE": "Delete deployment '{{name}}'?"
+            }
         }
     },
     "DECISION-TABLE-DEPLOYMENT": {
@@ -1390,7 +1412,20 @@
             "TENANT": "Tenant"
         },
         "ACTION": {
+            "UPLOAD": "Upload form",
             "DELETE": "Delete deployment"
+        },
+        "POPUP": {
+            "UPLOAD": {
+                "DESCRIPTION": "Select a .form, .json form file to deploy to the FORM engine.",
+                "DROPZONE": "Or drop a file here",
+                "NO-DROP": "File drop is not supported by your browser",
+                "CANCEL-UPLOAD": "Cancel upload",
+                "ERROR": "Could not upload this file"
+            },
+            "DELETE": {
+                "CONFIRM-MESSAGE": "Delete deployment '{{name}}'?"
+            }
         }
     },
     "FORM-DEPLOYMENT": {

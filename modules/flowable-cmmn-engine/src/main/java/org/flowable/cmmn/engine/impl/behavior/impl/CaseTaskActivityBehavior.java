@@ -12,6 +12,8 @@
  */
 package org.flowable.cmmn.engine.impl.behavior.impl;
 
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.cmmn.api.CallbackTypes;
 import org.flowable.cmmn.api.delegate.DelegatePlanItemInstance;
@@ -23,35 +25,50 @@ import org.flowable.cmmn.engine.impl.persistence.entity.PlanItemInstanceEntity;
 import org.flowable.cmmn.engine.impl.runtime.CaseInstanceBuilderImpl;
 import org.flowable.cmmn.engine.impl.runtime.CaseInstanceHelper;
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
+import org.flowable.cmmn.engine.impl.util.EntityLinkUtil;
 import org.flowable.cmmn.model.CaseTask;
 import org.flowable.cmmn.model.PlanItemTransition;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.delegate.Expression;
+import org.flowable.common.engine.api.scope.ScopeTypes;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 
 /**
  * @author Joram Barrez
  */
-public class CaseTaskActivityBehavior extends TaskActivityBehavior implements PlanItemActivityBehavior {
+public class CaseTaskActivityBehavior extends ChildTaskActivityBehavior implements PlanItemActivityBehavior {
 
     protected Expression caseRefExpression;
+    protected Boolean fallbackToDefaultTenant;
 
-    public CaseTaskActivityBehavior(Expression caseRefExpression,CaseTask caseTask) {
+    public CaseTaskActivityBehavior(Expression caseRefExpression, CaseTask caseTask) {
         super(caseTask.isBlocking(), caseTask.getBlockingExpression());
         this.caseRefExpression = caseRefExpression;
+        this.fallbackToDefaultTenant = caseTask.getFallbackToDefaultTenant();
     }
 
     @Override
-    public void execute(CommandContext commandContext, PlanItemInstanceEntity planItemInstanceEntity) {
+    public void execute(CommandContext commandContext, PlanItemInstanceEntity planItemInstanceEntity, Map<String, Object> variables) {
 
         CaseInstanceHelper caseInstanceHelper = CommandContextUtil.getCaseInstanceHelper(commandContext);
         CaseInstanceBuilder caseInstanceBuilder = new CaseInstanceBuilderImpl().
                 caseDefinitionKey(caseRefExpression.getValue(planItemInstanceEntity).toString());
         if (StringUtils.isNotEmpty(planItemInstanceEntity.getTenantId())) {
             caseInstanceBuilder.tenantId(planItemInstanceEntity.getTenantId());
+            caseInstanceBuilder.overrideCaseDefinitionTenantId(planItemInstanceEntity.getTenantId());
         }
+        
+        caseInstanceBuilder.parentId(planItemInstanceEntity.getCaseInstanceId());
+        
+        if (fallbackToDefaultTenant != null && fallbackToDefaultTenant) {
+            caseInstanceBuilder.fallbackToDefaultTenant();
+        }
+        
+        if (variables != null && !variables.isEmpty()) {
+            caseInstanceBuilder.variables(variables);
+        }
+
         CaseInstanceEntity caseInstanceEntity = caseInstanceHelper.startCaseInstance(caseInstanceBuilder);
-        caseInstanceEntity.setParentId(planItemInstanceEntity.getCaseInstanceId());
 
         // Bidirectional storing of reference to avoid queries later on
         caseInstanceEntity.setCallbackType(CallbackTypes.PLAN_ITEM_CHILD_CASE);
@@ -59,6 +76,11 @@ public class CaseTaskActivityBehavior extends TaskActivityBehavior implements Pl
 
         planItemInstanceEntity.setReferenceType(CallbackTypes.PLAN_ITEM_CHILD_CASE);
         planItemInstanceEntity.setReferenceId(caseInstanceEntity.getId());
+        
+        if (CommandContextUtil.getCmmnEngineConfiguration(commandContext).isEnableEntityLinks()) {
+            EntityLinkUtil.copyExistingEntityLinks(planItemInstanceEntity.getCaseInstanceId(), caseInstanceEntity.getId(), ScopeTypes.CMMN);
+            EntityLinkUtil.createNewEntityLink(planItemInstanceEntity.getCaseInstanceId(), caseInstanceEntity.getId(), ScopeTypes.CMMN);
+        }
 
         if (!evaluateIsBlocking(planItemInstanceEntity)) {
             CommandContextUtil.getAgenda(commandContext).planCompletePlanItemInstanceOperation((PlanItemInstanceEntity) planItemInstanceEntity);
@@ -79,7 +101,7 @@ public class CaseTaskActivityBehavior extends TaskActivityBehavior implements Pl
         }
 
         // Triggering the plan item (as opposed to a regular complete) terminates the case instance
-        CommandContextUtil.getAgenda(commandContext).planTerminateCaseInstanceOperation(planItemInstance.getReferenceId(), true);
+        CommandContextUtil.getAgenda(commandContext).planManualTerminateCaseInstanceOperation(planItemInstance.getReferenceId());
         CommandContextUtil.getAgenda(commandContext).planCompletePlanItemInstanceOperation(planItemInstance);
     }
 
@@ -87,7 +109,7 @@ public class CaseTaskActivityBehavior extends TaskActivityBehavior implements Pl
     public void onStateTransition(CommandContext commandContext, DelegatePlanItemInstance planItemInstance, String transition) {
         if (PlanItemTransition.TERMINATE.equals(transition) || PlanItemTransition.EXIT.equals(transition)) {
             // The plan item will be deleted by the regular TerminatePlanItemOperation
-            CommandContextUtil.getAgenda(commandContext).planTerminateCaseInstanceOperation(planItemInstance.getReferenceId(), true);
+            CommandContextUtil.getAgenda(commandContext).planManualTerminateCaseInstanceOperation(planItemInstance.getReferenceId());
         }
     }
 

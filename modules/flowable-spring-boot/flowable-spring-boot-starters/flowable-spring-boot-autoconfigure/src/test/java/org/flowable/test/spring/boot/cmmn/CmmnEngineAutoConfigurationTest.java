@@ -39,7 +39,6 @@ import org.flowable.engine.ProcessEngineConfiguration;
 import org.flowable.engine.impl.util.EngineServiceUtil;
 import org.flowable.idm.spring.SpringIdmEngineConfiguration;
 import org.flowable.spring.SpringProcessEngineConfiguration;
-import org.flowable.spring.boot.FlowableTransactionAutoConfiguration;
 import org.flowable.spring.boot.ProcessEngineAutoConfiguration;
 import org.flowable.spring.boot.ProcessEngineServicesAutoConfiguration;
 import org.flowable.spring.boot.app.AppEngineAutoConfiguration;
@@ -106,7 +105,6 @@ public class CmmnEngineAutoConfigurationTest {
     public void cmmnEngineWithBasicDataSourceAndProcessEngine() {
         contextRunner.withConfiguration(AutoConfigurations.of(
             HibernateJpaAutoConfiguration.class,
-            FlowableTransactionAutoConfiguration.class,
             ProcessEngineServicesAutoConfiguration.class,
             ProcessEngineAutoConfiguration.class
         )).run(context -> {
@@ -130,8 +128,8 @@ public class CmmnEngineAutoConfigurationTest {
                 .satisfies(configuration -> {
                     assertThat(configuration.getInvokedConfigurations())
                         .containsExactly(
-                            SpringIdmEngineConfiguration.class,
                             SpringCmmnEngineConfiguration.class,
+                            SpringIdmEngineConfiguration.class,
                             SpringProcessEngineConfiguration.class
                         );
                 });
@@ -145,7 +143,6 @@ public class CmmnEngineAutoConfigurationTest {
     public void cmmnEngineWithBasicDataSourceAndAppEngine() {
         contextRunner.withConfiguration(AutoConfigurations.of(
             HibernateJpaAutoConfiguration.class,
-            FlowableTransactionAutoConfiguration.class,
             AppEngineServicesAutoConfiguration.class,
             AppEngineAutoConfiguration.class,
             ProcessEngineServicesAutoConfiguration.class,
@@ -171,8 +168,8 @@ public class CmmnEngineAutoConfigurationTest {
                     assertThat(configuration.getInvokedConfigurations())
                         .containsExactly(
                             SpringProcessEngineConfiguration.class,
-                            SpringIdmEngineConfiguration.class,
                             SpringCmmnEngineConfiguration.class,
+                            SpringIdmEngineConfiguration.class,
                             SpringAppEngineConfiguration.class
                         );
                 });
@@ -227,9 +224,9 @@ public class CmmnEngineAutoConfigurationTest {
         
         List<CmmnDeployment> deployments = repositoryService.createDeploymentQuery().list();
 
-        assertThat(deployments).hasSize(2)
+        assertThat(deployments).hasSize(3)
             .extracting(CmmnDeployment::getName)
-            .contains("SpringBootAutoDeployment", "simple.bar");
+            .contains("SpringBootAutoDeployment", "simple.bar", "processTask.bar");
         
         AppRepositoryService appRepositoryService = context.getBean(AppRepositoryService.class);
         List<AppDefinition> appDefinitions = appRepositoryService.createAppDefinitionQuery().list();
@@ -245,9 +242,9 @@ public class CmmnEngineAutoConfigurationTest {
         assertThat(appDefinition.getVersion()).isOne();
         
         List<AppDeployment> appDeployments = appRepositoryService.createDeploymentQuery().list();
-        assertThat(appDeployments).hasSize(2)
+        assertThat(appDeployments).hasSize(3)
             .extracting(AppDeployment::getName)
-            .contains("simple.bar", "vacationRequest.zip");
+            .contains("simple.bar", "vacationRequest.zip", "processTask.bar");
     }
 
     private static CmmnEngineConfigurationApi cmmnEngine(ProcessEngine processEngine) {
