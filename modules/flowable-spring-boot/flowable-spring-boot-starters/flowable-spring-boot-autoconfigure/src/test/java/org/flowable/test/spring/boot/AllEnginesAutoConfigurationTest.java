@@ -16,9 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.flowable.test.spring.boot.util.DeploymentCleanerUtil.deleteDeployments;
-import static org.junit.Assert.assertEquals;
-
-import java.util.List;
 
 import java.util.List;
 
@@ -232,11 +229,13 @@ public class AllEnginesAutoConfigurationTest {
         });
 
     }
+
     @Test
     public void testInclusiveGatewayProcessTask() {
         contextRunner.run((context -> {
             SpringCmmnEngineConfiguration cmmnEngineConfiguration = context.getBean(SpringCmmnEngineConfiguration.class);
             SpringProcessEngineConfiguration processEngineConfiguration = context.getBean(SpringProcessEngineConfiguration.class);
+
             CmmnRuntimeService cmmnRuntimeService = cmmnEngineConfiguration.getCmmnRuntimeService();
             CmmnHistoryService cmmnHistoryService = cmmnEngineConfiguration.getCmmnHistoryService();
             RuntimeService runtimeService = processEngineConfiguration.getRuntimeService();

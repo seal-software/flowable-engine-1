@@ -174,33 +174,6 @@ public class CaseInstanceChangeState {
         return this;
     }
 
-    public List<String> getActivatePlanItemDefinitionIds() {
-        return activatePlanItemDefinitionIds;
-    }
-
-    public CaseInstanceChangeState setActivatePlanItemDefinitionIds(List<String> activatePlanItemDefinitionIds) {
-        this.activatePlanItemDefinitionIds = activatePlanItemDefinitionIds;
-        return this;
-    }
-    
-    public List<String> getChangePlanItemToAvailableIdList() {
-        return changePlanItemToAvailableIdList;
-    }
-
-    public CaseInstanceChangeState setChangePlanItemToAvailableIdList(List<String> changePlanItemToAvailableIdList) {
-        this.changePlanItemToAvailableIdList = changePlanItemToAvailableIdList;
-        return this;
-    }
-
-    public Map<String, Map<String, Object>> getChildInstanceTaskVariables() {
-        return childInstanceTaskVariables;
-    }
-
-    public CaseInstanceChangeState setChildInstanceTaskVariables(Map<String, Map<String, Object>> childInstanceTaskVariables) {
-        this.childInstanceTaskVariables = childInstanceTaskVariables;
-        return this;
-    }
-
     public HashMap<String, PlanItemInstanceEntity> getCreatedStageInstances() {
         return createdStageInstances;
     }

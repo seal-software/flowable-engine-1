@@ -184,42 +184,4 @@ public class DeploymentTest extends AbstractFlowableFormTest {
         formService.deleteFormInstance(formInstance.getId());
         assertThat(formService.createFormInstanceQuery().id(formInstance.getId()).count()).isZero();
     }
-    
-    @Test
-    public void deploySingleFormWithParentDeploymentId() {
-        FormDeployment deployment = repositoryService.createDeployment()
-                .addClasspathResource("org/flowable/form/engine/test/deployment/simple.form")
-                .parentDeploymentId("someDeploymentId")
-                .deploy();
-        
-        FormDeployment newDeployment = repositoryService.createDeployment()
-                .addClasspathResource("org/flowable/form/engine/test/deployment/simple.form")
-                .deploy();
-        
-        try {
-            FormDefinition definition = repositoryService.createFormDefinitionQuery().deploymentId(deployment.getId()).singleResult();
-            assertNotNull(definition);
-            assertEquals("form1", definition.getKey());
-            assertEquals(1, definition.getVersion());
-            
-            FormDefinition newDefinition = repositoryService.createFormDefinitionQuery().deploymentId(newDeployment.getId()).singleResult();
-            assertNotNull(newDefinition);
-            assertEquals("form1", newDefinition.getKey());
-            assertEquals(2, newDefinition.getVersion());
-            
-            FormInfo formInfo = repositoryService.getFormModelByKeyAndParentDeploymentId("form1", "someDeploymentId");
-            assertEquals("form1", formInfo.getKey());
-            assertEquals(1, formInfo.getVersion());
-            
-            formEngineConfiguration.setAlwaysLookupLatestDefinitionVersion(true);
-            formInfo = repositoryService.getFormModelByKeyAndParentDeploymentId("form1", "someDeploymentId");
-            assertEquals("form1", formInfo.getKey());
-            assertEquals(2, formInfo.getVersion());
-        
-        } finally {
-            formEngineConfiguration.setAlwaysLookupLatestDefinitionVersion(false);
-            repositoryService.deleteDeployment(deployment.getId());
-            repositoryService.deleteDeployment(newDeployment.getId());
-        }
-    }
 }

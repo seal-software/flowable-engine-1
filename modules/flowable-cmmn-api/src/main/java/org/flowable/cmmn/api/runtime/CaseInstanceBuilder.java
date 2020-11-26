@@ -116,8 +116,6 @@ public interface CaseInstanceBuilder {
     String getCaseDefinitionId();
 
     String getCaseDefinitionKey();
-    
-    String getPredefinedCaseInstanceId();
 
     String getCaseDefinitionParentDeploymentId();
     

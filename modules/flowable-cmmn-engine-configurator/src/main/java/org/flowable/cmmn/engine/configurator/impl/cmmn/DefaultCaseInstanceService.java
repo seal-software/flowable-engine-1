@@ -65,10 +65,6 @@ public class DefaultCaseInstanceService implements CaseInstanceService {
             caseInstanceBuilder.predefinedCaseInstanceId(predefinedCaseInstanceId);
         }
         
-        if (predefinedCaseInstanceId != null) {
-            caseInstanceBuilder.predefinedCaseInstanceId(predefinedCaseInstanceId);
-        }
-        
         if (tenantId != null) {
             caseInstanceBuilder.tenantId(tenantId);
         }

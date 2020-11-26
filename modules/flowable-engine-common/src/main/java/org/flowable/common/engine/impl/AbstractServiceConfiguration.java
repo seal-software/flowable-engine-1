@@ -54,10 +54,6 @@ public abstract class AbstractServiceConfiguration {
         this.engineName = engineName;
     }
     
-    public AbstractServiceConfiguration(String engineName) {
-        this.engineName = engineName;
-    }
-    
     public boolean isHistoryLevelAtLeast(HistoryLevel level) {
         if (logger.isDebugEnabled()) {
             logger.debug("Current history level: {}, level required: {}", historyLevel, level);

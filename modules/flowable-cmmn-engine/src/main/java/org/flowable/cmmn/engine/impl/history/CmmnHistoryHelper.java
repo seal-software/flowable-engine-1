@@ -59,13 +59,6 @@ public class CmmnHistoryHelper {
             historicVariableInstanceEntityManager.delete(historicVariableInstanceEntity);
         }
 
-        HistoricVariableInstanceEntityManager historicVariableInstanceEntityManager = getHistoricVariableInstanceEntityManager();
-        List<HistoricVariableInstanceEntity> historicVariableInstanceEntities = historicVariableInstanceEntityManager
-            .findHistoricalVariableInstancesByScopeIdAndScopeType(caseInstanceId, ScopeTypes.CMMN);
-        for (HistoricVariableInstanceEntity historicVariableInstanceEntity : historicVariableInstanceEntities) {
-            historicVariableInstanceEntityManager.delete(historicVariableInstanceEntity);
-        }
-
         historicCaseInstanceEntityManager.delete(historicCaseInstance);
 
         // Also delete any sub cases that may be active

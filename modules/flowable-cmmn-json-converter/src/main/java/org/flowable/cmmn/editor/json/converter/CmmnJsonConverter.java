@@ -12,7 +12,7 @@
  */
 package org.flowable.cmmn.editor.json.converter;
 
-import java.awt.*;
+import java.awt.Shape;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
@@ -258,9 +258,6 @@ public class CmmnJsonConverter implements EditorJsonConstants, CmmnStencilConsta
             } else {
                 setPropertyValue(PROPERTY_FORMKEY, planModelFormKey, planModelPropertiesNode);
             }
-        }
-        if (StringUtils.isNotEmpty(planModelStage.getValidateFormFields())) {
-            planModelPropertiesNode.put(PROPERTY_FORM_FIELD_VALIDATION, planModelStage.getValidateFormFields());
         }
         if (StringUtils.isNotEmpty(planModelStage.getValidateFormFields())) {
             planModelPropertiesNode.put(PROPERTY_FORM_FIELD_VALIDATION, planModelStage.getValidateFormFields());

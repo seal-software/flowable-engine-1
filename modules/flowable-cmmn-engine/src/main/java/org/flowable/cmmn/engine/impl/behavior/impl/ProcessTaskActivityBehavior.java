@@ -136,48 +136,6 @@ public class ProcessTaskActivityBehavior extends ChildTaskActivityBehavior imple
         }
     }
 
-    protected void handleInParameters(PlanItemInstanceEntity planItemInstanceEntity,
-            CmmnEngineConfiguration cmmnEngineConfiguration, Map<String, Object> inParametersMap) {
-
-        if (inParameters == null) {
-            return;
-        }
-
-        for (IOParameter inParameter : inParameters) {
-
-            String variableName = null;
-            if (StringUtils.isNotEmpty(inParameter.getTargetExpression())) {
-                Expression expression = cmmnEngineConfiguration.getExpressionManager().createExpression(inParameter.getTargetExpression());
-                Object variableNameValue = expression.getValue(planItemInstanceEntity);
-                if (variableNameValue != null) {
-                    variableName = variableNameValue.toString();
-                } else {
-                    LOGGER.warn("In parameter target expression {} did not resolve to a variable name, this is most likely a programmatic error",
-                        inParameter.getTargetExpression());
-                }
-
-            } else if (StringUtils.isNotEmpty(inParameter.getTarget())){
-                variableName = inParameter.getTarget();
-
-            }
-
-            Object variableValue = null;
-            if (StringUtils.isNotEmpty(inParameter.getSourceExpression())) {
-                Expression expression = cmmnEngineConfiguration.getExpressionManager().createExpression(inParameter.getSourceExpression());
-                variableValue = expression.getValue(planItemInstanceEntity);
-
-            } else if (StringUtils.isNotEmpty(inParameter.getSource())) {
-                variableValue = planItemInstanceEntity.getVariable(inParameter.getSource());
-
-            }
-
-            if (variableName != null) {
-                inParametersMap.put(variableName, variableValue);
-            }
-
-        }
-    }
-
     @Override
     public void trigger(CommandContext commandContext, PlanItemInstanceEntity planItemInstance) {
         if (!PlanItemInstanceState.ACTIVE.equals(planItemInstance.getState())) {

@@ -1775,6 +1775,7 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
     @Override
     public long executeCount(CommandContext commandContext) {
         ensureVariablesInitialized();
+
         if (taskServiceConfiguration.getTaskQueryInterceptor() != null) {
             taskServiceConfiguration.getTaskQueryInterceptor().beforeTaskQueryExecute(this);
         }

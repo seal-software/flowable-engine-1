@@ -165,14 +165,6 @@ public class ChangePlanItemStateBuilderImpl implements ChangePlanItemStateBuilde
         return terminatePlanItemDefinitions;
     }
 
-    public List<String> getActivatePlanItemDefinitionIdList() {
-        return activatePlanItemDefinitionIdList;
-    }
-
-    public List<String> getChangePlanItemToAvailableIdList() {
-        return changePlanItemToAvailableIdList;
-    }
-
     public Map<String, Object> getCaseVariables() {
         return caseVariables;
     }

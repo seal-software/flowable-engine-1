@@ -428,27 +428,6 @@ public abstract class AbstractCmmnDynamicStateManager {
 
         return newPlanItemInstance;
     }
-    
-    protected PlanItemInstanceEntity createStagesAndPlanItemInstances(PlanItem planItem, CaseInstanceEntity caseInstance, 
-                    Collection<PlanItemInstanceEntity> movingPlanItemInstances, CaseInstanceChangeState caseInstanceChangeState, CommandContext commandContext) {
-        
-        PlanItemInstanceEntityManager planItemInstanceEntityManager = CommandContextUtil.getPlanItemInstanceEntityManager(commandContext);
-        
-        // Resolve the stage elements that need to be created for each move to plan item definition
-        Map<String, Stage> stagesToCreate = new HashMap<>();
-        PlanItemDefinition planItemDefinition = planItem.getPlanItemDefinition();
-        Stage stage = planItemDefinition.getParentStage();
-            
-        while (stage != null) {
-            if (!stage.isPlanModel() && !caseInstanceChangeState.getCreatedStageInstances().containsKey(stage.getId()) && 
-                            !isStageAncestorOfAnyPlanItemInstance(stage.getId(), movingPlanItemInstances)) {
-                
-                stagesToCreate.put(stage.getId(), stage);
-            }
-            stage = stage.getParentStage();
-        }
-
-        Set<String> movingPlanItemInstanceIds = movingPlanItemInstances.stream().map(PlanItemInstanceEntity::getId).collect(Collectors.toSet());
 
     protected void createChildPlanItemInstancesForStage(List<PlanItemInstanceEntity> newPlanItemInstances, Set<String> newPlanItemInstanceIds, CommandContext commandContext) {
         if (newPlanItemInstances.size() == 0) {

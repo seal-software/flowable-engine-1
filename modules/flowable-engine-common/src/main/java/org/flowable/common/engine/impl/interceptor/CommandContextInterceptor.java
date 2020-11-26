@@ -115,23 +115,6 @@ public class CommandContextInterceptor extends AbstractCommandInterceptor {
             }
         }
 
-        // Rethrow exception if needed
-        if (contextReused && commandContext.getException() != null) {
-
-            // If it's reused, we need to throw the exception again so it propagates upwards,
-            // but the exception needs to be reset again or the parent call can incorrectly be marked
-            // as having an exception (the nested call can be try-catched for example)
-            Throwable exception = commandContext.getException();
-            commandContext.resetException();
-
-            // Wrapping it to avoid having 'throws throwable' in all method signatures
-            if (exception instanceof FlowableException) {
-                throw (FlowableException) exception;
-            } else {
-                throw new FlowableException("Exception during command execution", exception);
-            }
-        }
-
         return null;
     }
     

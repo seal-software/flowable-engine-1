@@ -166,6 +166,7 @@ public class HistoricTaskInstanceQueryImpl extends AbstractVariableQueryImpl<His
     @Override
     public long executeCount(CommandContext commandContext) {
         ensureVariablesInitialized();
+
         if (taskServiceConfiguration.getHistoricTaskQueryInterceptor() != null) {
             taskServiceConfiguration.getHistoricTaskQueryInterceptor().beforeHistoricTaskQueryExecute(this);
         }

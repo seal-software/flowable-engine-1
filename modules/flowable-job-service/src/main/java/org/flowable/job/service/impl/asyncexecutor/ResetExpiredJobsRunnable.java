@@ -131,6 +131,7 @@ public class ResetExpiredJobsRunnable implements Runnable {
                     LOGGER.error("exception during resetting expired jobs: {} for engine {}", e.getMessage(), 
                                     asyncExecutor.getJobServiceConfiguration().getEngineName(), e);
                     hasExpiredJobs = false; // will stop the loop
+
                 }
             }
 

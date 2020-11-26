@@ -31,12 +31,14 @@ import org.junit.Test;
  * @author Tijs Rademakers
  */
 public class ChangeStateProcessTaskTest extends AbstractProcessEngineIntegrationTest {
+
     @Before
     public void deployOneTaskProcess() {
         if (processEngineRepositoryService.createDeploymentQuery().count() == 0) {
             processEngineRepositoryService.createDeployment().addClasspathResource("org/flowable/cmmn/test/oneTaskProcess.bpmn20.xml").deploy();
         }
     }
+
     @Test
     @CmmnDeployment
     public void testActivateProcessTask() {

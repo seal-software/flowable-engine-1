@@ -93,10 +93,6 @@ public class CaseTaskActivityBehavior extends ChildTaskActivityBehavior implemen
         if (fallbackToDefaultTenant != null && fallbackToDefaultTenant) {
             caseInstanceBuilder.fallbackToDefaultTenant();
         }
-        
-        if (variables != null && !variables.isEmpty()) {
-            caseInstanceBuilder.variables(variables);
-        }
 
         Map<String, Object> finalVariableMap = new HashMap<>();
         handleInParameters(planItemInstanceEntity, cmmnEngineConfiguration, finalVariableMap, cmmnEngineConfiguration.getExpressionManager());

@@ -15,8 +15,6 @@ package org.flowable.cmmn.engine.impl.agenda.operation;
 import org.flowable.cmmn.api.runtime.CaseInstanceState;
 import org.flowable.cmmn.engine.impl.criteria.PlanItemLifeCycleEvent;
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
-import org.flowable.cmmn.engine.impl.util.ExpressionUtil;
-import org.flowable.cmmn.engine.impl.util.PlanItemInstanceContainerUtil;
 import org.flowable.cmmn.model.Criterion;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.slf4j.Logger;

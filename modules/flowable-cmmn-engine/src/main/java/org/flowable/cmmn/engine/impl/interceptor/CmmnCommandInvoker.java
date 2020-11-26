@@ -102,6 +102,7 @@ public class CmmnCommandInvoker extends AbstractCommandInterceptor {
     protected void evaluateUntilStable(CommandContext commandContext) {
         Set<String> involvedCaseInstanceIds = CommandContextUtil.getInvolvedCaseInstanceIds(commandContext);
         if (involvedCaseInstanceIds != null) {
+
             for (String caseInstanceId : involvedCaseInstanceIds) {
                 CommandContextUtil.getAgenda(commandContext).planEvaluateCriteriaOperation(caseInstanceId, true);
             }
@@ -116,6 +117,7 @@ public class CmmnCommandInvoker extends AbstractCommandInterceptor {
             }
         }
     }
+
     @Override
     public void setNext(CommandInterceptor next) {
         throw new UnsupportedOperationException("CommandInvoker must be the last interceptor in the chain");

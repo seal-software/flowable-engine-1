@@ -59,10 +59,6 @@ public class CmmnDbSchemaManager extends LiquibaseBasedSchemaManager {
         }
     }
 
-    public void initSchema() {
-        initSchema(CommandContextUtil.getCmmnEngineConfiguration().getDatabaseSchemaUpdate());
-    }
-    
     @Override
     public void schemaCreate() {
         try {

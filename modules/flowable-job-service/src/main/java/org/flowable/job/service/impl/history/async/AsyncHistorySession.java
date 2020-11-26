@@ -27,8 +27,6 @@ import org.flowable.job.service.JobServiceConfiguration;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 public class AsyncHistorySession implements Session {
     
     public static final String TIMESTAMP = "__timeStamp"; // Two underscores to avoid clashes with other fields

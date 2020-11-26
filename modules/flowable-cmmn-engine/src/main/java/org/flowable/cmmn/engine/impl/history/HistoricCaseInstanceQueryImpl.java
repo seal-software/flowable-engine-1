@@ -57,7 +57,6 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
     protected String caseDefinitionCategory;
     protected Integer caseDefinitionVersion;
     protected String caseInstanceId;
-    protected String caseInstanceNameLikeIgnoreCase;
     protected Set<String> caseInstanceIds;
     protected String caseInstanceNameLikeIgnoreCase;
     protected String businessKey;
@@ -831,10 +830,6 @@ public class HistoricCaseInstanceQueryImpl extends AbstractVariableQueryImpl<His
     @Override
     public String getId() {
         return caseInstanceId;
-    }
-
-    public String getCaseInstanceNameLikeIgnoreCase() {
-        return caseInstanceNameLikeIgnoreCase;
     }
 
     public String getCaseInstanceNameLikeIgnoreCase() {

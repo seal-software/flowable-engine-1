@@ -277,4 +277,5 @@ public class AsyncTaskTest extends FlowableCmmnTestCase {
         assertThat(cmmnRuntimeService.getVariable(caseInstance.getId(), "serviceTaskVar1")).isEqualTo("firstST");
         assertThat(cmmnRuntimeService.getVariable(caseInstance.getId(), "serviceTaskVar2")).isEqualTo("secondST");
     }
+
 }

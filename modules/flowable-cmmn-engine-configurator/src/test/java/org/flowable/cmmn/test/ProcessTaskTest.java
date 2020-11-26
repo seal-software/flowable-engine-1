@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.assertj.core.api.Assertions;
 import org.flowable.cmmn.api.CallbackTypes;
 import org.flowable.cmmn.api.history.HistoricMilestoneInstance;
 import org.flowable.cmmn.api.history.HistoricPlanItemInstance;
@@ -860,6 +859,7 @@ public class ProcessTaskTest extends AbstractProcessEngineIntegrationTest {
             processEngineRepositoryService.deleteDeployment(deployment.getId(), true);
         }
     }
+
     protected CaseInstance startCaseInstanceWithOneTaskProcess() {
         return startCaseInstanceWithOneTaskProcess(null);
     }
