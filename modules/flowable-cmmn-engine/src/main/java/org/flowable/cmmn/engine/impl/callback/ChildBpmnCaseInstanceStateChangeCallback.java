@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Callback implementation for a child case instance (started from a process instance) returning it's state change to its parent.
+ *
  * @author Tijs Rademakers
  * @author Joram Barrez
  */
@@ -66,7 +68,7 @@ public class ChildBpmnCaseInstanceStateChangeCallback implements RuntimeInstance
                 }
 
                 String variableName = null;
-                if (liquibase.util.StringUtils.isNotEmpty(outParameter.getTarget()))  {
+                if (liquibase.util.StringUtils.isNotEmpty(outParameter.getTarget())) {
                     variableName = outParameter.getTarget();
 
                 } else if (StringUtils.isNotEmpty(outParameter.getTargetExpression())) {

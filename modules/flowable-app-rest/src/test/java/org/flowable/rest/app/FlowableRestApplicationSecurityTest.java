@@ -57,7 +57,6 @@ public class FlowableRestApplicationSecurityTest {
         Arrays.asList(
             "self",
             "flowable",
-            "auditevents",
             "beans",
             "health",
             "conditions",
@@ -72,8 +71,10 @@ public class FlowableRestApplicationSecurityTest {
             "metrics",
             "metrics-requiredMetricName",
             "scheduledtasks",
-            "httptrace",
-            "mappings"
+            "mappings",
+            "caches",
+            "caches-cache",
+            "health-path"
         )
     );
 
@@ -89,7 +90,7 @@ public class FlowableRestApplicationSecurityTest {
     @Test
     public void nonAuthenticatedUserShouldNotBeAbleToAccessActuator() {
         String actuatorUrl = "http://localhost:" + serverPort + "/flowable-rest/actuator";
-        ResponseEntity<Object> entity = restTemplate.getForEntity(actuatorUrl, Object.class);
+        ResponseEntity<String> entity = restTemplate.getForEntity(actuatorUrl, String.class);
 
         assertThat(entity.getStatusCode())
             .as("GET Actuator response status")
@@ -105,7 +106,7 @@ public class FlowableRestApplicationSecurityTest {
                 continue;
             }
 
-            ResponseEntity<Object> endpointResponse = restTemplate.getForEntity(link.getHref(), Object.class);
+            ResponseEntity<String> endpointResponse = restTemplate.getForEntity(link.getHref(), String.class);
 
             assertThat(endpointResponse.getStatusCode())
                 .as("Endpoint '" + endpoint + "' response status")
@@ -126,7 +127,7 @@ public class FlowableRestApplicationSecurityTest {
 
         HttpEntity<?> request = new HttpEntity<>(createHeaders("test-user", "test"));
         String actuatorUrl = "http://localhost:" + serverPort + "/flowable-rest/actuator";
-        ResponseEntity<Object> entity = restTemplate.exchange(actuatorUrl, HttpMethod.GET, request, Object.class);
+        ResponseEntity<String> entity = restTemplate.exchange(actuatorUrl, HttpMethod.GET, request, String.class);
 
         assertThat(entity.getStatusCode())
             .as("GET Actuator response status")
@@ -148,7 +149,7 @@ public class FlowableRestApplicationSecurityTest {
                 continue;
             }
 
-            ResponseEntity<Object> endpointResponse = restTemplate.exchange(link.getHref(), HttpMethod.GET, request, Object.class);
+            ResponseEntity<String> endpointResponse = restTemplate.exchange(link.getHref(), HttpMethod.GET, request, String.class);
 
             assertThat(endpointResponse.getStatusCode())
                 .as("Endpoint '" + endpoint + "' response status")

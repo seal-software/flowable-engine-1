@@ -12,6 +12,9 @@
  */
 package org.flowable.rest.service.api;
 
+import org.flowable.batch.api.Batch;
+import org.flowable.batch.api.BatchPart;
+import org.flowable.batch.api.BatchQuery;
 import org.flowable.engine.form.FormData;
 import org.flowable.engine.history.HistoricActivityInstanceQuery;
 import org.flowable.engine.history.HistoricDetail;
@@ -25,18 +28,20 @@ import org.flowable.engine.repository.Model;
 import org.flowable.engine.repository.ModelQuery;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.repository.ProcessDefinitionQuery;
-import org.flowable.engine.runtime.EventSubscription;
-import org.flowable.engine.runtime.EventSubscriptionQuery;
 import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ExecutionQuery;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.runtime.ProcessInstanceBuilder;
 import org.flowable.engine.runtime.ProcessInstanceQuery;
+import org.flowable.eventsubscription.api.EventSubscription;
+import org.flowable.eventsubscription.api.EventSubscriptionQuery;
 import org.flowable.idm.api.Group;
 import org.flowable.idm.api.GroupQuery;
 import org.flowable.idm.api.User;
 import org.flowable.idm.api.UserQuery;
 import org.flowable.job.api.DeadLetterJobQuery;
+import org.flowable.job.api.HistoryJob;
+import org.flowable.job.api.HistoryJobQuery;
 import org.flowable.job.api.Job;
 import org.flowable.job.api.JobQuery;
 import org.flowable.job.api.SuspendedJobQuery;
@@ -57,6 +62,7 @@ import org.flowable.rest.service.api.runtime.process.ExecutionQueryRequest;
 import org.flowable.rest.service.api.runtime.process.InjectActivityRequest;
 import org.flowable.rest.service.api.runtime.process.ProcessInstanceCreateRequest;
 import org.flowable.rest.service.api.runtime.process.ProcessInstanceQueryRequest;
+import org.flowable.rest.service.api.runtime.process.ProcessInstanceUpdateRequest;
 import org.flowable.rest.service.api.runtime.process.SignalEventReceivedRequest;
 import org.flowable.rest.service.api.runtime.task.TaskActionRequest;
 import org.flowable.rest.service.api.runtime.task.TaskQueryRequest;
@@ -94,7 +100,9 @@ public interface BpmnRestApiInterceptor {
     void accessProcessInstanceInfoWithQuery(ProcessInstanceQuery processInstanceQuery, ProcessInstanceQueryRequest request);
     
     void createProcessInstance(ProcessInstanceBuilder processInstanceBuilder, ProcessInstanceCreateRequest request);
-    
+
+    void updateProcessInstance(ProcessInstance processInstance, ProcessInstanceUpdateRequest updateRequest);
+
     void deleteProcessInstance(ProcessInstance processInstance);
     
     void sendSignal(SignalEventReceivedRequest signalEventReceivedRequest);
@@ -102,6 +110,8 @@ public interface BpmnRestApiInterceptor {
     void changeActivityState(ExecutionChangeActivityStateRequest changeActivityStateRequest);
     
     void migrateProcessInstance(String processInstanceId, String migrationDocument);
+    
+    void migrateInstancesOfProcessDefinition(ProcessDefinition processDefinition, String migrationDocument);
     
     void injectActivity(InjectActivityRequest injectActivityRequest);
     
@@ -130,6 +140,8 @@ public interface BpmnRestApiInterceptor {
     void createModel(Model model, ModelRequest request);
     
     void accessJobInfoById(Job job);
+
+    void accessHistoryJobInfoById(HistoryJob job);
     
     void accessJobInfoWithQuery(JobQuery jobQuery);
     
@@ -138,8 +150,22 @@ public interface BpmnRestApiInterceptor {
     void accessSuspendedJobInfoWithQuery(SuspendedJobQuery jobQuery);
     
     void accessDeadLetterJobInfoWithQuery(DeadLetterJobQuery jobQuery);
+
+    void accessHistoryJobInfoWithQuery(HistoryJobQuery jobQuery);
     
     void deleteJob(Job job);
+
+    void deleteHistoryJob(HistoryJob historyJob);
+    
+    void accessBatchInfoById(Batch batch);
+    
+    void accessBatchInfoWithQuery(BatchQuery batchQuery);
+    
+    void deleteBatch(Batch batch);
+    
+    void accessBatchPartInfoOfBatch(Batch batch);
+    
+    void accessBatchPartInfoById(BatchPart batchPart);
     
     void accessManagementInfo();
     

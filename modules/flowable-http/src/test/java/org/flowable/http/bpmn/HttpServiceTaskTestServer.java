@@ -89,6 +89,7 @@ public class HttpServiceTaskTestServer {
             contextHandler.addServlet(new ServletHolder(new SimpleHttpServiceTaskTestServlet()), "/test");
             contextHandler.addServlet(new ServletHolder(new HelloServlet()), "/hello");
             contextHandler.addServlet(new ServletHolder(new ArrayResponseServlet()), "/array-response");
+            contextHandler.addServlet(new ServletHolder(new DeleteResponseServlet()), "/delete");
             server.setHandler(contextHandler);
             server.start();
         } catch (Exception e) {
@@ -125,6 +126,15 @@ public class HttpServiceTaskTestServer {
 
         public HttpServiceTaskTestServlet(String name) {
             this.name = name;
+        }
+
+        @Override
+        public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+            if (request.getMethod() != null && "PATCH".equalsIgnoreCase(request.getMethod())) {
+                doPatch(request, response);
+            } else {
+                super.service(request, response);
+            }
         }
 
         @Override
@@ -181,6 +191,11 @@ public class HttpServiceTaskTestServer {
 
         @Override
         protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            doPost(req, resp);
+        }
+        
+        // not in HttpServlet spec; see service()
+        protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
             doPost(req, resp);
         }
 
@@ -283,6 +298,17 @@ public class HttpServiceTaskTestServer {
             resp.setStatus(200);
             resp.setContentType("application/json");
             resp.getWriter().println("{ \"total\": 3, \"data\": [ { \"name\" : \"abc\"}, { \"name\" : \"def\"}, { \"name\" : \"ghi\"} ] }");
+        }
+
+    }
+
+    private static class DeleteResponseServlet extends HttpServlet {
+
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+            resp.setStatus(200);
         }
 
     }

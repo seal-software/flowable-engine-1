@@ -12,8 +12,7 @@
  */
 package org.flowable.idm.engine.test.api.identity;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.flowable.idm.api.PasswordEncoder;
 import org.flowable.idm.api.PasswordSalt;
@@ -44,12 +43,11 @@ public class PasswordEncoderTest extends PluggableFlowableIdmTestCase {
         User johndoe = idmIdentityService.createUserQuery().userId("johndoe").list().get(0);
         LOGGER.info("Hash Password = {}", johndoe.getPassword());
 
-        assertFalse("xxx".equals(johndoe.getPassword()));
-        assertTrue(idmIdentityService.checkPassword("johndoe", "xxx"));
-        assertFalse(idmIdentityService.checkPassword("johndoe", "invalid pwd"));
+        assertThat(johndoe.getPassword()).isNotEqualTo("xxx");
+        assertThat(idmIdentityService.checkPassword("johndoe", "xxx")).isTrue();
+        assertThat(idmIdentityService.checkPassword("johndoe", "invalid pwd")).isFalse();
 
         idmIdentityService.deleteUser("johndoe");
-
     }
 
     @Test
@@ -93,7 +91,7 @@ public class PasswordEncoderTest extends PluggableFlowableIdmTestCase {
         idmIdentityService.saveUser(user);
 
         String noSalt = idmIdentityService.createUserQuery().userId("johndoe").list().get(0).getPassword();
-        assertTrue(idmIdentityService.checkPassword("johndoe", "xxx"));
+        assertThat(idmIdentityService.checkPassword("johndoe", "xxx")).isTrue();
         idmIdentityService.deleteUser("johndoe");
 
         idmEngineConfiguration.setPasswordSalt(new PasswordSaltImpl("salt"));
@@ -102,9 +100,9 @@ public class PasswordEncoderTest extends PluggableFlowableIdmTestCase {
         idmIdentityService.saveUser(user);
 
         String salt = idmIdentityService.createUserQuery().userId("johndoe1").list().get(0).getPassword();
-        assertTrue(idmIdentityService.checkPassword("johndoe1", "xxx"));
+        assertThat(idmIdentityService.checkPassword("johndoe1", "xxx")).isTrue();
 
-        assertFalse(noSalt.equals(salt));
+        assertThat(salt).isNotEqualTo(noSalt);
         idmIdentityService.deleteUser("johndoe1");
 
         idmEngineConfiguration.setPasswordEncoder(passwordEncoder);
@@ -115,11 +113,10 @@ public class PasswordEncoderTest extends PluggableFlowableIdmTestCase {
         PasswordEncoder passwordEncoder = idmEngineConfiguration.getPasswordEncoder();
         idmEngineConfiguration.setPasswordEncoder(new CustomPasswordEncoder());
         PasswordEncoder customPasswordEncoder = idmEngineConfiguration.getPasswordEncoder();
-        assertTrue(customPasswordEncoder instanceof CustomPasswordEncoder);
+        assertThat(customPasswordEncoder).isInstanceOf(CustomPasswordEncoder.class);
 
         idmEngineConfiguration.setPasswordEncoder(passwordEncoder);
     }
-
 
     class CustomPasswordEncoder implements PasswordEncoder {
 
@@ -133,6 +130,5 @@ public class PasswordEncoderTest extends PluggableFlowableIdmTestCase {
             return false;
         }
     }
-
 
 }

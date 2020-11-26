@@ -15,12 +15,14 @@ package org.flowable.cmmn.converter;
 import javax.xml.stream.XMLStreamReader;
 
 import org.flowable.cmmn.model.BaseElement;
+import org.flowable.cmmn.model.EventListener;
 import org.flowable.cmmn.model.GenericEventListener;
+import org.flowable.cmmn.model.SignalEventListener;
 
 /**
  * @author Tijs Rademakers
  */
-public class GenericEventListenerXmlConverter extends PlanItemDefinitiomXmlConverter {
+public class GenericEventListenerXmlConverter extends PlanItemDefinitionXmlConverter {
 
     @Override
     public boolean hasChildElements() {
@@ -34,10 +36,20 @@ public class GenericEventListenerXmlConverter extends PlanItemDefinitiomXmlConve
 
     @Override
     protected BaseElement convert(XMLStreamReader xtr, ConversionHelper conversionHelper) {
-        return convertCommonAttributes(xtr, new GenericEventListener());
+        String listenerType = xtr.getAttributeValue(null, CmmnXmlConstants.ATTRIBUTE_EVENT_LISTENER_TYPE);
+        if ("signal".equals(listenerType)) {
+            SignalEventListener signalEventListener = new SignalEventListener();
+            signalEventListener.setSignalRef(xtr.getAttributeValue(null, CmmnXmlConstants.ATTRIBUTE_EVENT_LISTENER_SIGNAL_REF));
+            return convertCommonAttributes(xtr, signalEventListener);
+
+        } else {
+            GenericEventListener genericEventListener = new GenericEventListener();
+            return convertCommonAttributes(xtr, genericEventListener);
+
+        }
     }
 
-    protected GenericEventListener convertCommonAttributes(XMLStreamReader xtr, GenericEventListener listener) {
+    protected EventListener convertCommonAttributes(XMLStreamReader xtr, EventListener listener) {
         listener.setName(xtr.getAttributeValue(null, CmmnXmlConstants.ATTRIBUTE_NAME));
         listener.setAvailableConditionExpression(xtr.getAttributeValue(CmmnXmlConstants.FLOWABLE_EXTENSIONS_NAMESPACE,
             CmmnXmlConstants.ATTRIBUTE_EVENT_LISTENER_AVAILABLE_CONDITION));

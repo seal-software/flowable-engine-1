@@ -14,10 +14,13 @@ package org.flowable.engine.impl.util;
 
 import org.flowable.common.engine.api.delegate.event.FlowableEngineEventType;
 import org.flowable.common.engine.api.delegate.event.FlowableEventDispatcher;
+import org.flowable.common.engine.api.scope.ScopeTypes;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.delegate.event.impl.FlowableEventBuilder;
+import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.persistence.CountingExecutionEntity;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
+import org.flowable.eventsubscription.api.EventSubscription;
 import org.flowable.task.service.impl.persistence.CountingTaskEntity;
 import org.flowable.task.service.impl.persistence.entity.TaskEntity;
 import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEntity;
@@ -29,37 +32,69 @@ public class CountingEntityUtil {
 
     public static void handleDeleteVariableInstanceEntityCount(VariableInstanceEntity variableInstance, boolean fireDeleteEvent) {
         CommandContext commandContext = CommandContextUtil.getCommandContext();
+        ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration(commandContext);
         if (variableInstance.getTaskId() != null && isTaskRelatedEntityCountEnabledGlobally()) {
-            CountingTaskEntity countingTaskEntity = (CountingTaskEntity) CommandContextUtil.getTaskService().getTask(variableInstance.getTaskId());
+            CountingTaskEntity countingTaskEntity = (CountingTaskEntity) processEngineConfiguration.getTaskServiceConfiguration().getTaskService()
+                    .getTask(variableInstance.getTaskId());
             if (isTaskRelatedEntityCountEnabled(countingTaskEntity)) {
                 countingTaskEntity.setVariableCount(countingTaskEntity.getVariableCount() - 1);
             }
         } else if (variableInstance.getExecutionId() != null && isExecutionRelatedEntityCountEnabledGlobally()) {
-            CountingExecutionEntity executionEntity = (CountingExecutionEntity) CommandContextUtil.getExecutionEntityManager(commandContext).findById(variableInstance.getExecutionId());
+            CountingExecutionEntity executionEntity = (CountingExecutionEntity) processEngineConfiguration.getExecutionEntityManager(
+                    ).findById(variableInstance.getExecutionId());
             if (isExecutionRelatedEntityCountEnabled(executionEntity)) {
                 executionEntity.setVariableCount(executionEntity.getVariableCount() - 1);
             }
         }
         
-        FlowableEventDispatcher eventDispatcher = CommandContextUtil.getEventDispatcher(commandContext);
+        FlowableEventDispatcher eventDispatcher = processEngineConfiguration.getEventDispatcher();
         if (fireDeleteEvent && eventDispatcher != null && eventDispatcher.isEnabled()) {
-            eventDispatcher.dispatchEvent(FlowableEventBuilder.createEntityEvent(FlowableEngineEventType.ENTITY_DELETED, variableInstance));
-    
-            eventDispatcher.dispatchEvent(EventUtil.createVariableDeleteEvent(variableInstance));
+            eventDispatcher.dispatchEvent(FlowableEventBuilder.createEntityEvent(FlowableEngineEventType.ENTITY_DELETED, variableInstance),
+                    processEngineConfiguration.getEngineCfgKey());
+            eventDispatcher.dispatchEvent(EventUtil.createVariableDeleteEvent(variableInstance), processEngineConfiguration.getEngineCfgKey());
         }
     }
     
     public static void handleInsertVariableInstanceEntityCount(VariableInstanceEntity variableInstance) {
         CommandContext commandContext = CommandContextUtil.getCommandContext();
+        ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration(commandContext);
         if (variableInstance.getTaskId() != null && isTaskRelatedEntityCountEnabledGlobally()) {
-            CountingTaskEntity countingTaskEntity = (CountingTaskEntity) CommandContextUtil.getTaskService().getTask(variableInstance.getTaskId());
+            CountingTaskEntity countingTaskEntity = (CountingTaskEntity) processEngineConfiguration.getTaskServiceConfiguration().getTaskService()
+                    .getTask(variableInstance.getTaskId());
             if (isTaskRelatedEntityCountEnabled(countingTaskEntity)) {
                 countingTaskEntity.setVariableCount(countingTaskEntity.getVariableCount() + 1);
             }
         } else if (variableInstance.getExecutionId() != null && isExecutionRelatedEntityCountEnabledGlobally()) {
-            CountingExecutionEntity executionEntity = (CountingExecutionEntity) CommandContextUtil.getExecutionEntityManager(commandContext).findById(variableInstance.getExecutionId());
+            CountingExecutionEntity executionEntity = (CountingExecutionEntity) processEngineConfiguration.getExecutionEntityManager().findById(variableInstance.getExecutionId());
             if (isExecutionRelatedEntityCountEnabled(executionEntity)) {
                 executionEntity.setVariableCount(executionEntity.getVariableCount() + 1);
+            }
+        } else if (ScopeTypes.BPMN_DEPENDENT.contains(variableInstance.getScopeType()) && isExecutionRelatedEntityCountEnabledGlobally()) {
+            CountingExecutionEntity executionEntity = (CountingExecutionEntity) processEngineConfiguration.getExecutionEntityManager().findById(variableInstance.getSubScopeId());
+            if (isExecutionRelatedEntityCountEnabled(executionEntity)) {
+                executionEntity.setVariableCount(executionEntity.getVariableCount() + 1);
+            }
+        }
+    }
+    
+    public static void handleInsertEventSubscriptionEntityCount(EventSubscription eventSubscription) {
+        if (eventSubscription.getExecutionId() != null && CountingEntityUtil.isExecutionRelatedEntityCountEnabledGlobally()) {
+            CountingExecutionEntity executionEntity = (CountingExecutionEntity) CommandContextUtil.getExecutionEntityManager().findById(
+                            eventSubscription.getExecutionId());
+
+            if (CountingEntityUtil.isExecutionRelatedEntityCountEnabled(executionEntity)) {
+                executionEntity.setEventSubscriptionCount(executionEntity.getEventSubscriptionCount() + 1);
+            }
+        }
+    }
+    
+    public static void handleDeleteEventSubscriptionEntityCount(EventSubscription eventSubscription) {
+        if (eventSubscription.getExecutionId() != null && CountingEntityUtil.isExecutionRelatedEntityCountEnabledGlobally()) {
+            CountingExecutionEntity executionEntity = (CountingExecutionEntity) CommandContextUtil.getExecutionEntityManager().findById(
+                            eventSubscription.getExecutionId());
+            
+            if (CountingEntityUtil.isExecutionRelatedEntityCountEnabled(executionEntity)) {
+                executionEntity.setEventSubscriptionCount(executionEntity.getEventSubscriptionCount() - 1);
             }
         }
     }

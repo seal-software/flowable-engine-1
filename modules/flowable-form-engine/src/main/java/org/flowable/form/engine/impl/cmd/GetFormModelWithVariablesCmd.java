@@ -13,7 +13,8 @@
 package org.flowable.form.engine.impl.cmd;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 import org.flowable.common.engine.api.delegate.Expression;
+import org.flowable.common.engine.api.scope.ScopeTypes;
 import org.flowable.common.engine.impl.el.VariableContainerWrapper;
 import org.flowable.common.engine.impl.interceptor.Command;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
@@ -61,7 +63,7 @@ public class GetFormModelWithVariablesCmd implements Command<FormInfo>, Serializ
 
     private static final long serialVersionUID = 1L;
     
-    protected static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-M-d");
+    protected static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-M-d");
 
     protected String formDefinitionKey;
     protected String parentDeploymentId;
@@ -131,7 +133,7 @@ public class GetFormModelWithVariablesCmd implements Command<FormInfo>, Serializ
                 if (field instanceof OptionFormField) {
                     // Drop down options to be populated from an expression
                     OptionFormField optionFormField = (OptionFormField) field;
-                    if(optionFormField.getOptionsExpression() != null) {
+                    if (optionFormField.getOptionsExpression() != null) {
                         Expression optionsExpression = formEngineConfiguration.getExpressionManager().createExpression(optionFormField.getOptionsExpression());
                         Object value = null;
                         try {
@@ -139,11 +141,11 @@ public class GetFormModelWithVariablesCmd implements Command<FormInfo>, Serializ
                         } catch (Exception e) {
                             throw new FlowableException("Error getting value for optionsExpression: " + optionFormField.getOptionsExpression(), e);
                         }
-                        if(value instanceof List) {
+                        if (value instanceof List) {
                             @SuppressWarnings("unchecked")
                             List<Option> options = (List<Option>) value;
                             optionFormField.setOptions(options);
-                        } else if(value instanceof String) {
+                        } else if (value instanceof String) {
                             String json = (String) value;
                             try {
                                 List<Option> options = formEngineConfiguration.getObjectMapper().readValue(json, new TypeReference<List<Option>>(){});
@@ -192,7 +194,7 @@ public class GetFormModelWithVariablesCmd implements Command<FormInfo>, Serializ
                             field.setValue(dateVariable.toString("yyyy-M-d"));
                             
                         } else if (variableValue instanceof Date) {
-                            Date dateVariable = (Date) variableValue;
+                            Instant dateVariable = ((Date) variableValue).toInstant();
                             field.setValue(DATE_FORMAT.format(dateVariable));
                             
                         } else {
@@ -232,8 +234,9 @@ public class GetFormModelWithVariablesCmd implements Command<FormInfo>, Serializ
             formDefinitionEntity = formDefinitionEntityManager.findLatestFormDefinitionByKeyAndTenantId(formDefinitionKey, tenantId);
             
             if (formDefinitionEntity == null && (fallbackToDefaultTenant || formEngineConfiguration.isFallbackToDefaultTenant())) {
-                if (StringUtils.isNotEmpty(formEngineConfiguration.getDefaultTenantValue())) {
-                    formDefinitionEntity = formDefinitionEntityManager.findLatestFormDefinitionByKeyAndTenantId(formDefinitionKey, formEngineConfiguration.getDefaultTenantValue());
+                String defaultTenant = formEngineConfiguration.getDefaultTenantProvider().getDefaultTenant(tenantId, ScopeTypes.FORM, formDefinitionKey);
+                if (StringUtils.isNotEmpty(defaultTenant)) {
+                    formDefinitionEntity = formDefinitionEntityManager.findLatestFormDefinitionByKeyAndTenantId(formDefinitionKey, defaultTenant);
                 } else {
                     formDefinitionEntity = formDefinitionEntityManager.findLatestFormDefinitionByKey(formDefinitionKey);
                 }
@@ -276,8 +279,9 @@ public class GetFormModelWithVariablesCmd implements Command<FormInfo>, Serializ
             }
             
             if (formDefinitionEntity == null && (fallbackToDefaultTenant || formEngineConfiguration.isFallbackToDefaultTenant())) {
-                if (StringUtils.isNotEmpty(formEngineConfiguration.getDefaultTenantValue())) {
-                    formDefinitionEntity = formDefinitionEntityManager.findLatestFormDefinitionByKeyAndTenantId(formDefinitionKey, formEngineConfiguration.getDefaultTenantValue());
+                String defaultTenant = formEngineConfiguration.getDefaultTenantProvider().getDefaultTenant(tenantId, ScopeTypes.FORM, formDefinitionKey);
+                if (StringUtils.isNotEmpty(defaultTenant)) {
+                    formDefinitionEntity = formDefinitionEntityManager.findLatestFormDefinitionByKeyAndTenantId(formDefinitionKey, defaultTenant);
                 } else {
                     formDefinitionEntity = formDefinitionEntityManager.findLatestFormDefinitionByKey(formDefinitionKey);
                 }

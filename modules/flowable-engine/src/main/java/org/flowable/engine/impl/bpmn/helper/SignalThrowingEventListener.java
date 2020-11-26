@@ -20,10 +20,12 @@ import org.flowable.common.engine.api.delegate.event.FlowableEvent;
 import org.flowable.common.engine.api.delegate.event.FlowableEventListener;
 import org.flowable.common.engine.impl.context.Context;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
-import org.flowable.engine.impl.persistence.entity.EventSubscriptionEntityManager;
-import org.flowable.engine.impl.persistence.entity.SignalEventSubscriptionEntity;
+import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.util.CommandContextUtil;
+import org.flowable.engine.impl.util.EventSubscriptionUtil;
 import org.flowable.engine.repository.ProcessDefinition;
+import org.flowable.eventsubscription.service.EventSubscriptionService;
+import org.flowable.eventsubscription.service.impl.persistence.entity.SignalEventSubscriptionEntity;
 
 /**
  * An {@link FlowableEventListener} that throws a signal event when an event is dispatched to it.
@@ -47,23 +49,23 @@ public class SignalThrowingEventListener extends BaseDelegateEventListener {
             }
 
             CommandContext commandContext = Context.getCommandContext();
-            EventSubscriptionEntityManager eventSubscriptionEntityManager = CommandContextUtil.getEventSubscriptionEntityManager(commandContext);
+            ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration(commandContext);
+            EventSubscriptionService eventSubscriptionService = processEngineConfiguration.getEventSubscriptionServiceConfiguration().getEventSubscriptionService();
             List<SignalEventSubscriptionEntity> subscriptionEntities = null;
             if (processInstanceScope) {
-                subscriptionEntities = eventSubscriptionEntityManager.findSignalEventSubscriptionsByProcessInstanceAndEventName(engineEvent.getProcessInstanceId(), signalName);
+                subscriptionEntities = eventSubscriptionService.findSignalEventSubscriptionsByProcessInstanceAndEventName(engineEvent.getProcessInstanceId(), signalName);
             } else {
                 String tenantId = null;
                 if (engineEvent.getProcessDefinitionId() != null) {
-                    ProcessDefinition processDefinition = CommandContextUtil.getProcessEngineConfiguration(commandContext)
-                            .getDeploymentManager()
+                    ProcessDefinition processDefinition = processEngineConfiguration.getDeploymentManager()
                             .findDeployedProcessDefinitionById(engineEvent.getProcessDefinitionId());
                     tenantId = processDefinition.getTenantId();
                 }
-                subscriptionEntities = eventSubscriptionEntityManager.findSignalEventSubscriptionsByEventName(signalName, tenantId);
+                subscriptionEntities = eventSubscriptionService.findSignalEventSubscriptionsByEventName(signalName, tenantId);
             }
 
             for (SignalEventSubscriptionEntity signalEventSubscriptionEntity : subscriptionEntities) {
-                eventSubscriptionEntityManager.eventReceived(signalEventSubscriptionEntity, null, false);
+                EventSubscriptionUtil.eventReceived(signalEventSubscriptionEntity, null, false);
             }
         }
     }

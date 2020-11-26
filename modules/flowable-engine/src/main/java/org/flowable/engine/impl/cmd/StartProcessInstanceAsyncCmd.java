@@ -39,32 +39,36 @@ public class StartProcessInstanceAsyncCmd extends StartProcessInstanceCmd {
     @Override
     public ProcessInstance execute(CommandContext commandContext) {
         ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration(commandContext);
-        ProcessDefinition processDefinition = getProcessDefinition(processEngineConfiguration);
-        processInstanceHelper = CommandContextUtil.getProcessEngineConfiguration(commandContext).getProcessInstanceHelper();
+        ProcessDefinition processDefinition = getProcessDefinition(processEngineConfiguration, commandContext);
+        processInstanceHelper = processEngineConfiguration.getProcessInstanceHelper();
         ExecutionEntity processInstance = (ExecutionEntity) processInstanceHelper.createProcessInstance(processDefinition, businessKey, processInstanceName,
-            overrideDefinitionTenantId, predefinedProcessInstanceId, variables, transientVariables, callbackId, callbackType, false);
+            overrideDefinitionTenantId, predefinedProcessInstanceId, variables, transientVariables,
+            callbackId, callbackType, referenceId, referenceType, stageInstanceId, false);
         ExecutionEntity execution = processInstance.getExecutions().get(0);
         Process process = ProcessDefinitionUtil.getProcess(processInstance.getProcessDefinitionId());
 
         processInstanceHelper.processAvailableEventSubProcesses(processInstance, process, commandContext);
 
-        FlowableEventDispatcher eventDispatcher = CommandContextUtil.getProcessEngineConfiguration().getEventDispatcher();
+        FlowableEventDispatcher eventDispatcher = processEngineConfiguration.getEventDispatcher();
         if (eventDispatcher != null && eventDispatcher.isEnabled()) {
-            eventDispatcher.dispatchEvent(FlowableEventBuilder.createProcessStartedEvent(execution, variables, false));
+            eventDispatcher.dispatchEvent(FlowableEventBuilder.createProcessStartedEvent(execution, variables, false),
+                    processEngineConfiguration.getEngineCfgKey());
         }
 
-        executeAsynchronous(execution);
+        executeAsynchronous(execution, process, commandContext);
 
         return processInstance;
     }
 
-    protected void executeAsynchronous(ExecutionEntity execution) {
-        JobService jobService = CommandContextUtil.getJobService();
+    protected void executeAsynchronous(ExecutionEntity execution, Process process, CommandContext commandContext) {
+        JobService jobService = CommandContextUtil.getJobService(commandContext);
 
         JobEntity job = jobService.createJob();
         job.setExecutionId(execution.getId());
         job.setProcessInstanceId(execution.getProcessInstanceId());
         job.setProcessDefinitionId(execution.getProcessDefinitionId());
+        job.setElementId(process.getId());
+        job.setElementName(process.getName());
         job.setJobHandlerType(AsyncContinuationJobHandler.TYPE);
 
         // Inherit tenant id (if applicable)

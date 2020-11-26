@@ -92,6 +92,11 @@ public class BlueprintBasicTest {
                 mavenBundle().groupId("org.flowable").artifactId("flowable-idm-api").versionAsInProject(),
                 mavenBundle().groupId("org.flowable").artifactId("flowable-idm-engine").versionAsInProject(),
                 mavenBundle().groupId("org.flowable").artifactId("flowable-idm-engine-configurator").versionAsInProject(),
+                mavenBundle().groupId("org.flowable").artifactId("flowable-event-registry-model").versionAsInProject(),
+                mavenBundle().groupId("org.flowable").artifactId("flowable-event-registry-api").versionAsInProject(),
+                mavenBundle().groupId("org.flowable").artifactId("flowable-event-registry-json-converter").versionAsInProject(),
+                mavenBundle().groupId("org.flowable").artifactId("flowable-event-registry").versionAsInProject(),
+                mavenBundle().groupId("org.flowable").artifactId("flowable-event-registry-configurator").versionAsInProject(),
                 mavenBundle().groupId("org.flowable").artifactId("flowable-content-api").versionAsInProject(),
                 mavenBundle().groupId("org.flowable").artifactId("flowable-variable-service-api").versionAsInProject(),
                 mavenBundle().groupId("org.flowable").artifactId("flowable-variable-service").versionAsInProject(),
@@ -99,14 +104,19 @@ public class BlueprintBasicTest {
                 mavenBundle().groupId("org.flowable").artifactId("flowable-identitylink-service").versionAsInProject(),
                 mavenBundle().groupId("org.flowable").artifactId("flowable-entitylink-service-api").versionAsInProject(),
                 mavenBundle().groupId("org.flowable").artifactId("flowable-entitylink-service").versionAsInProject(),
+                mavenBundle().groupId("org.flowable").artifactId("flowable-eventsubscription-service-api").versionAsInProject(),
+                mavenBundle().groupId("org.flowable").artifactId("flowable-eventsubscription-service").versionAsInProject(),
                 mavenBundle().groupId("org.flowable").artifactId("flowable-task-service-api").versionAsInProject(),
                 mavenBundle().groupId("org.flowable").artifactId("flowable-task-service").versionAsInProject(),
                 mavenBundle().groupId("org.flowable").artifactId("flowable-job-service-api").versionAsInProject(),
                 mavenBundle().groupId("org.flowable").artifactId("flowable-job-service").versionAsInProject(),
+                mavenBundle().groupId("org.flowable").artifactId("flowable-batch-service").versionAsInProject(),
+                mavenBundle().groupId("org.flowable").artifactId("flowable-batch-service-api").versionAsInProject(),
                 mavenBundle().groupId("org.flowable").artifactId("flowable-cmmn-model").versionAsInProject(),
                 mavenBundle().groupId("org.flowable").artifactId("flowable-cmmn-api").versionAsInProject(),
                 mavenBundle().groupId("org.flowable").artifactId("flowable-engine").versionAsInProject(),
                 mavenBundle().groupId("org.apache.commons").artifactId("commons-lang3").versionAsInProject(),
+                mavenBundle().groupId("commons-io").artifactId("commons-io").versionAsInProject(),
                 mavenBundle().groupId("com.fasterxml.uuid").artifactId("java-uuid-generator").versionAsInProject(),
                 mavenBundle().groupId("com.fasterxml.jackson.core").artifactId("jackson-core").versionAsInProject(),
                 mavenBundle().groupId("com.fasterxml.jackson.core").artifactId("jackson-databind").versionAsInProject(),
@@ -114,7 +124,10 @@ public class BlueprintBasicTest {
                 mavenBundle().groupId("joda-time").artifactId("joda-time").versionAsInProject(),
                 mavenBundle().groupId("com.h2database").artifactId("h2").versionAsInProject(),
                 mavenBundle().groupId("org.mybatis").artifactId("mybatis").versionAsInProject(),
+                mavenBundle().groupId("org.liquibase").artifactId("liquibase-core").versionAsInProject(),
+                mavenBundle().groupId("org.yaml").artifactId("snakeyaml").versionAsInProject(),
                 mavenBundle().groupId("org.slf4j").artifactId("slf4j-log4j12").versionAsInProject().noStart(),
+                mavenBundle().groupId("org.junit.jupiter").artifactId("junit-jupiter-api").versionAsInProject(),
                 mavenBundle().groupId("org.apache.felix").artifactId("org.apache.felix.fileinstall").versionAsInProject(),
                 mavenBundle().groupId("org.apache.aries.blueprint").artifactId("org.apache.aries.blueprint.core").versionAsInProject(),
                 mavenBundle().groupId("org.apache.aries.proxy").artifactId("org.apache.aries.proxy").versionAsInProject(),
@@ -132,7 +145,7 @@ public class BlueprintBasicTest {
             return TinyBundles.bundle().add("OSGI-INF/blueprint/context.xml", new FileInputStream(new File("src/test/resources/config/context.xml")))
                     .set(Constants.BUNDLE_SYMBOLICNAME, "org.flowable.osgi.config").set(Constants.DYNAMICIMPORT_PACKAGE, "*").build();
         } catch (FileNotFoundException fnfe) {
-            fail("Failure in createTestBundleWithProcessEngineConfiguration " + fnfe.toString());
+            fail("Failure in createTestBundleWithProcessEngineConfiguration " + fnfe);
             return null;
         }
     }
@@ -142,7 +155,7 @@ public class BlueprintBasicTest {
             return TinyBundles.bundle().add("OSGI-INF/flowable/example.bpmn20.xml", new FileInputStream(new File("src/test/resources/processes/example.bpmn20.xml")))
                     .set(Constants.BUNDLE_SYMBOLICNAME, "org.flowable.osgi.example").build();
         } catch (FileNotFoundException fnfe) {
-            fail("Failure in createTestBundleWithProcessDefinition " + fnfe.toString());
+            fail("Failure in createTestBundleWithProcessDefinition " + fnfe);
             return null;
         }
     }
@@ -152,7 +165,7 @@ public class BlueprintBasicTest {
             return TinyBundles.bundle().add("OSGI-INF/blueprint/context.xml", new FileInputStream(new File("src/test/resources/task/context.xml"))).add(SimpleBean.class).add(ActivityBehaviourBean.class)
                     .set(Constants.BUNDLE_SYMBOLICNAME, "org.flowable.osgi.task").set(Constants.DYNAMICIMPORT_PACKAGE, "*").build();
         } catch (FileNotFoundException fnfe) {
-            fail("Failure in createTestBundleWithTask " + fnfe.toString());
+            fail("Failure in createTestBundleWithTask " + fnfe);
             return null;
         }
     }

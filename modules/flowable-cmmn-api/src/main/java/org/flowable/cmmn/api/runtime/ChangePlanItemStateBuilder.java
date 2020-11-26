@@ -15,6 +15,7 @@ package org.flowable.cmmn.api.runtime;
 import java.util.List;
 import java.util.Map;
 
+import org.flowable.cmmn.api.migration.ActivatePlanItemDefinitionMapping;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 
@@ -33,35 +34,45 @@ public interface ChangePlanItemStateBuilder {
     ChangePlanItemStateBuilder caseInstanceId(String caseInstanceId);
 
     /**
-     * Set the id of the plan item instance for which the plan item state should be changed
-     **/
-    ChangePlanItemStateBuilder movePlanItemInstanceToPlanItemDefinitionId(String planItemInstanceId, String planItemDefinitionId);
-
-    /**
-     * Set the ids of the plan item instances which should be changed to a single plan item instance with the provided plan item definition id.
-     **/
-    ChangePlanItemStateBuilder movePlanItemInstancesToSinglePlanItemDefinitionId(List<String> planItemInstanceIds, String planItemDefinitionId);
-
-    /**
-     * Set the id of a plan item instance which should be changed to multiple plan item instances with the provided plan item definition ids.
-     **/
-    ChangePlanItemStateBuilder moveSinglePlanItemInstanceToPlanItemDefinitionIds(String planItemInstanceId, List<String> planItemDefinitionIds);
-
-    /**
-     * Moves the plan item instance with the current plan item definition id to the provided new plan item definition id
+     * Activate a plan item by definition id.
      */
-    ChangePlanItemStateBuilder movePlanItemDefinitionIdTo(String currentPlanItemDefinitionId, String newPlanItemDefinitionId);
-
+    ChangePlanItemStateBuilder activatePlanItemDefinitionId(String planItemDefinitionId);
+    
     /**
-     * Set the plan item definition ids that should be changed to a single plan item definition id.
+     * Activate multiple plan items by definition id.
      */
-    ChangePlanItemStateBuilder movePlanItemDefinitionIdsToSinglePlanItemDefinitionId(List<String> currentPlanItemDefinitionIds, String newPlanItemDefinitionId);
-
+    ChangePlanItemStateBuilder activatePlanItemDefinitionIds(List<String> planItemDefinitionIds);
+    
     /**
-     * Set the plan item definition id that should be changed to multiple plan item definition ids.
+     * Activate a plan item by definition mapping.
      */
-    ChangePlanItemStateBuilder moveSinglePlanItemDefinitionIdToPlanItemDefinitionIds(String currentPlanItemDefinitionId, List<String> newPlanItemDefinitionIds);
-
+    ChangePlanItemStateBuilder activatePlanItemDefinition(ActivatePlanItemDefinitionMapping planItemDefinitionMapping);
+    
+    /**
+     * Activate multiple plan items by definition mapping.
+     */
+    ChangePlanItemStateBuilder activatePlanItemDefinitions(List<ActivatePlanItemDefinitionMapping> planItemDefinitionMappings);
+    
+    /**
+     * Set a plan item to available state by definition id.
+     */
+    ChangePlanItemStateBuilder changeToAvailableStateByPlanItemDefinitionId(String planItemDefinitionId);
+    
+    /**
+     * Set multiple plan items to available state by definition id.
+     */
+    ChangePlanItemStateBuilder changeToAvailableStateByPlanItemDefinitionIds(List<String> planItemDefinitionIds);
+    
+    /**
+     * Terminate a plan item by definition id without terminating another plan item instance.
+     */
+    ChangePlanItemStateBuilder terminatePlanItemDefinitionId(String planItemDefinitionId);
+    
+    /**
+     * Terminate multiple plan items by definition id without terminating another plan item instance.
+     */
+    ChangePlanItemStateBuilder terminatePlanItemDefinitionIds(List<String> planItemDefinitionIds);
+    
     /**
      * Activate a plan item by definition id without terminating another plan item instance.
      */

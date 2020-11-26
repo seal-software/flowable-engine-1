@@ -15,18 +15,21 @@ package org.flowable.task.service.impl;
 import java.util.Date;
 import java.util.List;
 
-import org.flowable.common.engine.impl.query.AbstractQuery;
+import org.flowable.common.engine.api.scope.ScopeTypes;
 import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.common.engine.impl.interceptor.CommandExecutor;
+import org.flowable.common.engine.impl.query.AbstractQuery;
 import org.flowable.task.api.history.HistoricTaskLogEntry;
 import org.flowable.task.api.history.HistoricTaskLogEntryQuery;
-import org.flowable.task.service.impl.util.CommandContextUtil;
+import org.flowable.task.service.TaskServiceConfiguration;
 
 /**
  * @author martin.grofcik
  */
 public class HistoricTaskLogEntryQueryImpl extends AbstractQuery<HistoricTaskLogEntryQuery, HistoricTaskLogEntry> implements HistoricTaskLogEntryQuery {
 
+    protected TaskServiceConfiguration taskServiceConfiguration;
+    
     protected String taskId;
     protected String type;
     protected String userId;
@@ -42,8 +45,9 @@ public class HistoricTaskLogEntryQueryImpl extends AbstractQuery<HistoricTaskLog
     protected long fromLogNumber = -1;
     protected long toLogNumber = -1;
 
-    public HistoricTaskLogEntryQueryImpl(CommandExecutor commandExecutor) {
+    public HistoricTaskLogEntryQueryImpl(CommandExecutor commandExecutor, TaskServiceConfiguration taskServiceConfiguration) {
         super(commandExecutor);
+        this.taskServiceConfiguration = taskServiceConfiguration;
     }
 
     @Override
@@ -85,6 +89,20 @@ public class HistoricTaskLogEntryQueryImpl extends AbstractQuery<HistoricTaskLog
     @Override
     public HistoricTaskLogEntryQuery scopeDefinitionId(String scopeDefinitionId) {
         this.scopeDefinitionId = scopeDefinitionId;
+        return this;
+    }
+
+    @Override
+    public HistoricTaskLogEntryQuery caseInstanceId(String caseInstanceId) {
+        this.scopeId = caseInstanceId;
+        this.scopeType = ScopeTypes.CMMN;
+        return this;
+    }
+
+    @Override
+    public HistoricTaskLogEntryQuery caseDefinitionId(String caseDefinitionId) {
+        this.scopeDefinitionId = caseDefinitionId;
+        this.scopeType = ScopeTypes.CMMN;
         return this;
     }
 
@@ -188,12 +206,12 @@ public class HistoricTaskLogEntryQueryImpl extends AbstractQuery<HistoricTaskLog
 
     @Override
     public long executeCount(CommandContext commandContext) {
-        return CommandContextUtil.getHistoricTaskLogEntryEntityManager(commandContext).findHistoricTaskLogEntriesCountByQueryCriteria(this);
+        return taskServiceConfiguration.getHistoricTaskLogEntryEntityManager().findHistoricTaskLogEntriesCountByQueryCriteria(this);
     }
 
     @Override
     public List<HistoricTaskLogEntry> executeList(CommandContext commandContext) {
-        return CommandContextUtil.getHistoricTaskLogEntryEntityManager(commandContext).findHistoricTaskLogEntriesByQueryCriteria(this);
+        return taskServiceConfiguration.getHistoricTaskLogEntryEntityManager().findHistoricTaskLogEntriesByQueryCriteria(this);
     }
 
     @Override

@@ -77,9 +77,9 @@ public abstract class MultiInstanceActivityBehavior extends FlowNodeActivityBeha
     protected static final String DELETE_REASON_END = "MI_END";
 
     // Variable names for outer instance(as described in spec)
-    protected final String NUMBER_OF_INSTANCES = "nrOfInstances";
-    protected final String NUMBER_OF_ACTIVE_INSTANCES = "nrOfActiveInstances";
-    protected final String NUMBER_OF_COMPLETED_INSTANCES = "nrOfCompletedInstances";
+    protected static final String NUMBER_OF_INSTANCES = "nrOfInstances";
+    protected static final String NUMBER_OF_ACTIVE_INSTANCES = "nrOfActiveInstances";
+    protected static final String NUMBER_OF_COMPLETED_INSTANCES = "nrOfCompletedInstances";
 
     // Instance members
     protected Activity activity;
@@ -270,13 +270,17 @@ public abstract class MultiInstanceActivityBehavior extends FlowNodeActivityBeha
     // //////////////////////////////////////////////////////////////////////
 
     protected void sendCompletedWithConditionEvent(DelegateExecution execution) {
-        CommandContextUtil.getEventDispatcher(CommandContextUtil.getCommandContext()).dispatchEvent(
-                buildCompletedEvent(execution, FlowableEngineEventType.MULTI_INSTANCE_ACTIVITY_COMPLETED_WITH_CONDITION));
+        ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration();
+        processEngineConfiguration.getEventDispatcher().dispatchEvent(
+                buildCompletedEvent(execution, FlowableEngineEventType.MULTI_INSTANCE_ACTIVITY_COMPLETED_WITH_CONDITION),
+                processEngineConfiguration.getEngineCfgKey());
     }
 
     protected void sendCompletedEvent(DelegateExecution execution) {
-        CommandContextUtil.getEventDispatcher(CommandContextUtil.getCommandContext()).dispatchEvent(
-                buildCompletedEvent(execution, FlowableEngineEventType.MULTI_INSTANCE_ACTIVITY_COMPLETED));
+        ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration();
+        processEngineConfiguration.getEventDispatcher().dispatchEvent(
+                buildCompletedEvent(execution, FlowableEngineEventType.MULTI_INSTANCE_ACTIVITY_COMPLETED),
+                processEngineConfiguration.getEngineCfgKey());
     }
 
     protected FlowableMultiInstanceActivityCompletedEvent buildCompletedEvent(DelegateExecution execution, FlowableEngineEventType eventType) {
@@ -307,7 +311,7 @@ public abstract class MultiInstanceActivityBehavior extends FlowNodeActivityBeha
     @SuppressWarnings("rawtypes")
     protected void executeOriginalBehavior(DelegateExecution execution, ExecutionEntity multiInstanceRootExecution, int loopCounter) {
         if (usesCollection() && collectionElementVariable != null) {
-            Collection collection = (Collection) resolveAndValidateCollection(execution);
+            Collection collection = resolveAndValidateCollection(execution);
 
             Object value = null;
             int index = 0;

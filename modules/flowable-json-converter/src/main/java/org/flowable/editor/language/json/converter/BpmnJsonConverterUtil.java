@@ -22,6 +22,7 @@ import org.flowable.bpmn.model.BooleanDataObject;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.DateDataObject;
 import org.flowable.bpmn.model.DoubleDataObject;
+import org.flowable.bpmn.model.Escalation;
 import org.flowable.bpmn.model.EventListener;
 import org.flowable.bpmn.model.FieldExtension;
 import org.flowable.bpmn.model.FlowElement;
@@ -271,6 +272,20 @@ public class BpmnJsonConverterUtil implements EditorJsonConstants, StencilConsta
                 messageNode.put(PROPERTY_MESSAGE_DEFINITION_NAME, message.getName());
             }
             propertiesNode.set(PROPERTY_MESSAGE_DEFINITIONS, messageDefinitions);
+        }
+    }
+    
+    public static void convertEscalationDefinitionsToJson(BpmnModel bpmnModel, ObjectNode propertiesNode) {
+        if (bpmnModel.getEscalations() != null) {
+            ArrayNode escalationDefinitions = objectMapper.createArrayNode();
+            for (Escalation escalation : bpmnModel.getEscalations()) {
+                ObjectNode escalationNode = escalationDefinitions.addObject();
+                escalationNode.put(PROPERTY_ESCALATION_DEFINITION_ID, escalation.getEscalationCode());
+                if (StringUtils.isNotEmpty(escalation.getName())) {
+                    escalationNode.put(PROPERTY_ESCALATION_DEFINITION_NAME, escalation.getName());
+                }
+            }
+            propertiesNode.set(PROPERTY_ESCALATION_DEFINITIONS, escalationDefinitions);
         }
     }
 
@@ -527,17 +542,17 @@ public class BpmnJsonConverterUtil implements EditorJsonConstants, StencilConsta
                         ItemDefinition itemSubjectRef = new ItemDefinition();
                         String dataType = dataNode.get(PROPERTY_DATA_TYPE).asText();
 
-                        if (dataType.equals("string")) {
+                        if ("string".equals(dataType)) {
                             dataObject = new StringDataObject();
-                        } else if (dataType.equals("int")) {
+                        } else if ("int".equals(dataType)) {
                             dataObject = new IntegerDataObject();
-                        } else if (dataType.equals("long")) {
+                        } else if ("long".equals(dataType)) {
                             dataObject = new LongDataObject();
-                        } else if (dataType.equals("double")) {
+                        } else if ("double".equals(dataType)) {
                             dataObject = new DoubleDataObject();
-                        } else if (dataType.equals("boolean")) {
+                        } else if ("boolean".equals(dataType)) {
                             dataObject = new BooleanDataObject();
-                        } else if (dataType.equals("datetime")) {
+                        } else if ("datetime".equals(dataType)) {
                             dataObject = new DateDataObject();
                         } else {
                             LOGGER.error("Error converting {}", dataIdNode.asText());

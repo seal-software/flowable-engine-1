@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 /**
@@ -51,8 +52,8 @@ import java.util.Properties;
  * <li>Single expressions using the ${} delimiter (e.g. "${employee.lastName}").</li>
  * <li>Single expressions using the #{} delimiter (e.g. "#{employee.lastName}").</li>
  * <li>Literal text containing no ${} or #{} delimiters (e.g. "John Doe").</li>
- * <li>Multiple expressions using the same delimiter (e.g.</li>
- * "${employee.firstName}${employee.lastName}" or "#{employee.firstName}#{employee.lastName}").
+ * <li>Multiple expressions using the same delimiter (e.g.
+ * "${employee.firstName}${employee.lastName}" or "#{employee.firstName}#{employee.lastName}").</li>
  * <li>Mixed literal text and expressions using the same delimiter (e.g. "Name:
  * ${employee.firstName} ${employee.lastName}").</li>
  * </ul>
@@ -120,7 +121,7 @@ public abstract class ExpressionFactory {
 		InputStream input = classLoader.getResourceAsStream(serviceId);
 		try {
 			if (input != null) {
-				BufferedReader reader = new BufferedReader(new InputStreamReader(input, "UTF-8"));
+				BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
 				className = reader.readLine();
 				reader.close();
 			}
@@ -188,7 +189,6 @@ public abstract class ExpressionFactory {
 	 * 
 	 * @param properties
 	 *            Properties passed to the constructor of the implementation.
-	 * @return an instance of ExpressionFactory
 	 * @param className
 	 *            The name of the ExpressionFactory class.
 	 * @param classLoader

@@ -66,7 +66,6 @@ import org.flowable.engine.form.TaskFormData;
 import org.flowable.engine.impl.cmd.AddIdentityLinkCmd;
 import org.flowable.engine.impl.persistence.deploy.ProcessDefinitionCacheEntry;
 import org.flowable.engine.impl.persistence.entity.DeploymentEntity;
-import org.flowable.engine.impl.persistence.entity.SignalEventSubscriptionEntity;
 import org.flowable.engine.impl.repository.DeploymentBuilderImpl;
 import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.repository.Deployment;
@@ -74,6 +73,7 @@ import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.task.Attachment;
 import org.flowable.engine.task.Comment;
+import org.flowable.eventsubscription.service.impl.persistence.entity.SignalEventSubscriptionEntity;
 import org.flowable.job.api.Job;
 import org.flowable.job.service.impl.persistence.entity.JobEntity;
 import org.flowable.task.service.impl.persistence.entity.TaskEntity;
@@ -1166,10 +1166,23 @@ public class DefaultFlowable5CompatibilityHandler implements Flowable5Compatibil
             throw new FlowableIllegalArgumentException(e.getMessage(), e.getCause());
 
         } else {
-            if (e.getCause() instanceof org.activiti.engine.ActivitiClassLoadingException) {
+            if (e.getCause() instanceof org.activiti.engine.delegate.BpmnError) {
+                org.activiti.engine.delegate.BpmnError activiti5BpmnError = (org.activiti.engine.delegate.BpmnError) e.getCause();
+                throw new BpmnError(activiti5BpmnError.getErrorCode(), activiti5BpmnError.getMessage());
+                
+            } else if (e.getCause() instanceof org.flowable.engine.delegate.BpmnError) {
+                org.flowable.engine.delegate.BpmnError activiti5BpmnError = (org.flowable.engine.delegate.BpmnError) e.getCause();
+                throw new BpmnError(activiti5BpmnError.getErrorCode(), activiti5BpmnError.getMessage());
+                
+            } else if (e.getCause() instanceof org.activiti.engine.ActivitiClassLoadingException) {
                 throw new FlowableException(e.getMessage(), new FlowableClassLoadingException(e.getCause().getMessage(), e.getCause().getCause()));
+                
             } else if (e.getCause() instanceof org.activiti.engine.ActivitiException) {
                 throw new FlowableException(e.getMessage(), new FlowableException(e.getCause().getMessage(), e.getCause().getCause()));
+                
+            } else if (e.getCause() instanceof FlowableException) {
+                throw (FlowableException) e.getCause();
+                
             } else {
                 throw new FlowableException(e.getMessage(), e.getCause());
             }

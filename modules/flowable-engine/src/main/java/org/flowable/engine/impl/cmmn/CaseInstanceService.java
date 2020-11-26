@@ -14,6 +14,8 @@ package org.flowable.engine.impl.cmmn;
 
 import java.util.Map;
 
+import org.flowable.eventsubscription.service.impl.persistence.entity.EventSubscriptionEntity;
+
 /**
  * @author Tijs Rademakers
  */
@@ -26,9 +28,13 @@ public interface CaseInstanceService {
      */
     String generateNewCaseInstanceId();
 
-    String startCaseInstanceByKey(String caseDefinitionKey, String predefinedCaseInstanceId, String caseInstanceName, String businessKey, 
-                    String executionId, String tenantId, boolean fallbackToDefaultTenant, Map<String, Object> inParametersMap);
+    String startCaseInstanceByKey(String caseDefinitionKey, String predefinedCaseInstanceId, String caseInstanceName, String businessKey,
+            String executionId, String tenantId, boolean fallbackToDefaultTenant, String parentDeploymentId, Map<String, Object> inParametersMap);
+    
+    void handleSignalEvent(EventSubscriptionEntity eventSubscription);
 
     void deleteCaseInstance(String caseInstanceId);
+
+    void deleteCaseInstancesForExecutionId(String executionId);
 
 }

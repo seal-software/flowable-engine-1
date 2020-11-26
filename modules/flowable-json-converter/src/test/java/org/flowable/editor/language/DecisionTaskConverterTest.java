@@ -12,14 +12,14 @@
  */
 package org.flowable.editor.language;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import org.flowable.bpmn.model.BpmnModel;
+import org.flowable.bpmn.model.FieldExtension;
 import org.flowable.bpmn.model.FlowElement;
 import org.flowable.bpmn.model.ServiceTask;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class DecisionTaskConverterTest extends AbstractConverterTest {
 
@@ -43,23 +43,18 @@ public class DecisionTaskConverterTest extends AbstractConverterTest {
 
     private void validateModel(BpmnModel model) {
         FlowElement flowElement = model.getMainProcess().getFlowElement("decisiontask", true);
-        assertNotNull(flowElement);
-        assertTrue(flowElement instanceof ServiceTask);
+        assertThat(flowElement).isNotNull();
+        assertThat(flowElement).isInstanceOf(ServiceTask.class);
         ServiceTask serviceTask = (ServiceTask) flowElement;
-        assertEquals("decisiontask", serviceTask.getId());
-        assertEquals("decision task", serviceTask.getName());
+        assertThat(serviceTask.getId()).isEqualTo("decisiontask");
+        assertThat(serviceTask.getName()).isEqualTo("decision task");
 
-        assertThatFieldExtension(serviceTask, "fallbackToDefaultTenant", "true");
-        assertThatFieldExtension(serviceTask, "decisionTaskThrowErrorOnNoHits", "true");
-
-    }
-
-    protected void assertThatFieldExtension(ServiceTask serviceTask, String fieldName, Object fieldValue) {
-        assertTrue(serviceTask.getFieldExtensions().stream().
-            filter(field -> field.getFieldName().equals(fieldName)).
-            findFirst().
-            orElseThrow(AssertionError::new).
-            getStringValue().equals(fieldValue)
-        );
+        assertThat(serviceTask.getFieldExtensions())
+                .extracting(FieldExtension::getFieldName, FieldExtension::getStringValue)
+                .as("fieldName, stringValue")
+                .contains(
+                        tuple("fallbackToDefaultTenant", "true"),
+                        tuple("decisionTaskThrowErrorOnNoHits", "true")
+                );
     }
 }

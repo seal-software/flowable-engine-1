@@ -12,16 +12,14 @@
  */
 package org.flowable.editor.language.xml;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.DataStore;
 import org.flowable.bpmn.model.DataStoreReference;
 import org.flowable.bpmn.model.FlowElement;
 import org.flowable.bpmn.model.Pool;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class DataStoreConverterTest extends AbstractConverterTest {
 
@@ -44,20 +42,20 @@ public class DataStoreConverterTest extends AbstractConverterTest {
     }
 
     private void validateModel(BpmnModel model) {
-        assertEquals(1, model.getDataStores().size());
+        assertThat(model.getDataStores())
+                .containsOnlyKeys("DataStore_1");
         DataStore dataStore = model.getDataStore("DataStore_1");
-        assertNotNull(dataStore);
-        assertEquals("DataStore_1", dataStore.getId());
-        assertEquals("test", dataStore.getDataState());
-        assertEquals("Test Database", dataStore.getName());
-        assertEquals("test", dataStore.getItemSubjectRef());
+        assertThat(dataStore).isNotNull();
+        assertThat(dataStore.getId()).isEqualTo("DataStore_1");
+        assertThat(dataStore.getDataState()).isEqualTo("test");
+        assertThat(dataStore.getName()).isEqualTo("Test Database");
+        assertThat(dataStore.getItemSubjectRef()).isEqualTo("test");
 
         FlowElement refElement = model.getFlowElement("DataStoreReference_1");
-        assertNotNull(refElement);
-        assertTrue(refElement instanceof DataStoreReference);
+        assertThat(refElement).isInstanceOf(DataStoreReference.class);
 
-        assertEquals(1, model.getPools().size());
-        Pool pool = model.getPools().get(0);
-        assertEquals("pool1", pool.getId());
+        assertThat(model.getPools())
+                .extracting(Pool::getId)
+                .containsExactly("pool1");
     }
 }

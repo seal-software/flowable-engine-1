@@ -27,14 +27,19 @@ public interface ActivityInstanceEntity extends ActivityInstance, Entity, HasRev
 
     void markEnded(String deleteReason);
 
+    @Override
     String getProcessInstanceId();
 
+    @Override
     String getProcessDefinitionId();
 
+    @Override
     Date getStartTime();
 
+    @Override
     Date getEndTime();
 
+    @Override
     Long getDurationInMillis();
 
     void setProcessInstanceId(String processInstanceId);
@@ -46,7 +51,10 @@ public interface ActivityInstanceEntity extends ActivityInstance, Entity, HasRev
     void setEndTime(Date endTime);
 
     void setDurationInMillis(Long durationInMillis);
+    
+    void setTransactionOrder(Integer transactionOrder);
 
+    @Override
     String getDeleteReason();
 
     void setDeleteReason(String deleteReason);

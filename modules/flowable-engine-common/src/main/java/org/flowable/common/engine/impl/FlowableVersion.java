@@ -20,7 +20,7 @@ import java.util.List;
  * 
  * The idea is that instances of this class are put in a sequential order, and that the current version is determined from the ACT_GE_PROPERTY table.
  * 
- * Since sometimes in the past, a version is ambiguous (eg. 5.12 => 5.12, 5.12.1, 5.12T) this class act as a wrapper with a smarter matches() method.
+ * Since sometimes in the past, a version is ambiguous (eg. 5.12 : 5.12, 5.12.1, 5.12T) this class act as a wrapper with a smarter matches() method.
  * 
  * @author Joram Barrez 
  */
@@ -53,6 +53,14 @@ public class FlowableVersion {
         }
     }
 
+    @Override
+    public int hashCode() {
+        int result = 0;
+        result = 31 * result + (mainVersion != null ? mainVersion.hashCode() : 0);
+        result = 31 * result + (alternativeVersionStrings != null ? alternativeVersionStrings.hashCode() : 0);
+        return result;
+    }
+    
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof FlowableVersion)) {

@@ -137,13 +137,12 @@ public class BaseVariableResource {
     }
 
     protected List<RestVariable> processCaseVariables(CaseInstance caseInstance, int variableType) {
-        List<RestVariable> result = new ArrayList<>();
-        
+
         // Check if it's a valid execution to get the variables for
         List<RestVariable> variables = addVariables(caseInstance, variableType);
 
         // Get unique variables from map
-        result.addAll(variables);
+        List<RestVariable> result = new ArrayList<>(variables);
         return result;
     }
 
@@ -239,13 +238,13 @@ public class BaseVariableResource {
 
             if (paramMap.get(parameterName).length > 0) {
 
-                if (parameterName.equalsIgnoreCase("scope")) {
+                if ("scope".equalsIgnoreCase(parameterName)) {
                     variableScope = paramMap.get(parameterName)[0];
 
-                } else if (parameterName.equalsIgnoreCase("name")) {
+                } else if ("name".equalsIgnoreCase(parameterName)) {
                     variableName = paramMap.get(parameterName)[0];
 
-                } else if (parameterName.equalsIgnoreCase("type")) {
+                } else if ("type".equalsIgnoreCase(parameterName)) {
                     variableType = paramMap.get(parameterName)[0];
                 }
             }

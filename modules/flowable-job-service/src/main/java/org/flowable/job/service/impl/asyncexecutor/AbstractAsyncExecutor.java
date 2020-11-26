@@ -20,7 +20,6 @@ import org.flowable.job.service.JobServiceConfiguration;
 import org.flowable.job.service.impl.cmd.UnacquireOwnedJobsCmd;
 import org.flowable.job.service.impl.persistence.entity.JobInfoEntity;
 import org.flowable.job.service.impl.persistence.entity.JobInfoEntityManager;
-import org.flowable.job.service.impl.util.CommandContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +32,8 @@ public abstract class AbstractAsyncExecutor implements AsyncExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAsyncExecutor.class);
 
+    private String tenantId;
+    
     protected boolean timerRunnableNeeded = true; // default true for backwards compatibility (History Async executor came later)
     protected AcquireTimerJobsRunnable timerJobRunnable;
     protected String acquireRunnableThreadName;
@@ -91,7 +92,7 @@ public abstract class AbstractAsyncExecutor implements AsyncExecutor {
     protected abstract boolean executeAsyncJob(final JobInfo job, Runnable runnable);
 
     protected void unlockOwnedJobs() {
-        jobServiceConfiguration.getCommandExecutor().execute(new UnacquireOwnedJobsCmd(lockOwner, null));
+        jobServiceConfiguration.getCommandExecutor().execute(new UnacquireOwnedJobsCmd(lockOwner, tenantId, jobServiceConfiguration));
     }
 
     protected Runnable createRunnableForJob(final JobInfo job) {
@@ -131,18 +132,22 @@ public abstract class AbstractAsyncExecutor implements AsyncExecutor {
         }
 
         JobInfoEntityManager<? extends JobInfoEntity> jobEntityManagerToUse = jobEntityManager != null
-                ? jobEntityManager : CommandContextUtil.getJobServiceConfiguration().getJobEntityManager();
+                ? jobEntityManager : jobServiceConfiguration.getJobEntityManager();
 
         if (resetExpiredJobsRunnable == null) {
-            String resetRunnableName = resetExpiredRunnableName != null ? resetExpiredRunnableName : "flowable-reset-expired-jobs";
-            resetExpiredJobsRunnable = new ResetExpiredJobsRunnable(resetRunnableName, this, jobEntityManagerToUse);
+            String resetRunnableName = resetExpiredRunnableName != null ?
+                    resetExpiredRunnableName : "flowable-" + getJobServiceConfiguration().getEngineName() + "-reset-expired-jobs";
+            resetExpiredJobsRunnable = createResetExpiredJobsRunnable(resetRunnableName);
         }
 
         if (!isMessageQueueMode && asyncJobsDueRunnable == null) {
-            String acquireJobsRunnableName = acquireRunnableThreadName != null ? acquireRunnableThreadName : "flowable-acquire-async-jobs";
+            String acquireJobsRunnableName = acquireRunnableThreadName != null ?
+                    acquireRunnableThreadName : "flowable-" + getJobServiceConfiguration().getEngineName() + "-acquire-async-jobs";
             asyncJobsDueRunnable = new AcquireAsyncJobsDueRunnable(acquireJobsRunnableName, this, jobEntityManagerToUse);
         }
     }
+
+    protected abstract ResetExpiredJobsRunnable createResetExpiredJobsRunnable(String resetRunnableName);
 
     protected abstract void startAdditionalComponents();
 
@@ -383,6 +388,10 @@ public abstract class AbstractAsyncExecutor implements AsyncExecutor {
 
     public ResetExpiredJobsRunnable getResetExpiredJobsRunnable() {
         return resetExpiredJobsRunnable;
+    }
+    
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
     
 }

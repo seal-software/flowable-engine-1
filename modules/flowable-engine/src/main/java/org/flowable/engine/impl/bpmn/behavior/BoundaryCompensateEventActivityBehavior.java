@@ -23,12 +23,14 @@ import org.flowable.bpmn.model.Process;
 import org.flowable.bpmn.model.SubProcess;
 import org.flowable.common.engine.api.FlowableException;
 import org.flowable.engine.delegate.DelegateExecution;
-import org.flowable.engine.impl.persistence.entity.CompensateEventSubscriptionEntity;
-import org.flowable.engine.impl.persistence.entity.EventSubscriptionEntity;
-import org.flowable.engine.impl.persistence.entity.EventSubscriptionEntityManager;
+import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.persistence.entity.ExecutionEntity;
 import org.flowable.engine.impl.util.CommandContextUtil;
+import org.flowable.engine.impl.util.CountingEntityUtil;
 import org.flowable.engine.impl.util.ProcessDefinitionUtil;
+import org.flowable.eventsubscription.service.EventSubscriptionService;
+import org.flowable.eventsubscription.service.impl.persistence.entity.CompensateEventSubscriptionEntity;
+import org.flowable.eventsubscription.service.impl.persistence.entity.EventSubscriptionEntity;
 
 /**
  * @author Tijs Rademakers
@@ -95,8 +97,17 @@ public class BoundaryCompensateEventActivityBehavior extends BoundaryEventActivi
             throw new FlowableException("Could not find a scope execution for compensation boundary event " + boundaryEvent.getId());
         }
 
-        CommandContextUtil.getEventSubscriptionEntityManager().insertCompensationEvent(
-                scopeExecution, sourceActivity.getId());
+        ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration();
+        EventSubscriptionEntity eventSubscription = (EventSubscriptionEntity) processEngineConfiguration.getEventSubscriptionServiceConfiguration()
+                .getEventSubscriptionService().createEventSubscriptionBuilder()
+                        .eventType(CompensateEventSubscriptionEntity.EVENT_TYPE)
+                        .executionId(scopeExecution.getId())
+                        .processInstanceId(scopeExecution.getProcessInstanceId())
+                        .activityId(sourceActivity.getId())
+                        .tenantId(scopeExecution.getTenantId())
+                        .create();
+        
+        CountingEntityUtil.handleInsertEventSubscriptionEntityCount(eventSubscription);
     }
 
     @Override
@@ -105,11 +116,13 @@ public class BoundaryCompensateEventActivityBehavior extends BoundaryEventActivi
         BoundaryEvent boundaryEvent = (BoundaryEvent) execution.getCurrentFlowElement();
 
         if (boundaryEvent.isCancelActivity()) {
-            EventSubscriptionEntityManager eventSubscriptionEntityManager = CommandContextUtil.getEventSubscriptionEntityManager();
+            ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration();
+            EventSubscriptionService eventSubscriptionService = processEngineConfiguration.getEventSubscriptionServiceConfiguration().getEventSubscriptionService();
             List<EventSubscriptionEntity> eventSubscriptions = executionEntity.getEventSubscriptions();
             for (EventSubscriptionEntity eventSubscription : eventSubscriptions) {
                 if (eventSubscription instanceof CompensateEventSubscriptionEntity && eventSubscription.getActivityId().equals(compensateEventDefinition.getActivityRef())) {
-                    eventSubscriptionEntityManager.delete(eventSubscription);
+                    eventSubscriptionService.deleteEventSubscription(eventSubscription);
+                    CountingEntityUtil.handleDeleteEventSubscriptionEntityCount(eventSubscription);
                 }
             }
         }
